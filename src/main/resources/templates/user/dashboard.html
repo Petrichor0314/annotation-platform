@@ -1,0 +1,23 @@
+<!-- user/dashboard.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+<h1>Welcome, <span th:text="${username}"></span>!</h1>
+
+<div sec:authorize="hasRole('ADMIN')">
+    <a href="/admin">Admin Panel</a>
+</div>
+
+<div sec:authorize="hasRole('ANNOTATOR')">
+    <a href="/annotator">Annotation Tool</a>
+</div>
+
+<form th:action="@{/auth/logout}" method="post">
+    <button type="submit">Logout</button>
+</form>
+</body>
+</html>

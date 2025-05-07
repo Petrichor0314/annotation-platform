@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Admin Dashboard</title>
+</head>
+<body>
+<h1>Welcome Admin!</h1>
+<div sec:authorize="hasRole('ADMIN')">
+    <p>This content is only visible to admins</p>
+</div>
+<form th:action="@{/auth/logout}" method="post">
+    <button type="submit">Logout</button>
+</form>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package com.mohamedoujdid.annotation_platform;
+package com.mohamedoujdid.annotationplatform;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
