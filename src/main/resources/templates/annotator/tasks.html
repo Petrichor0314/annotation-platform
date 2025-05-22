@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head th:replace="~{fragments/head :: head(${pageTitle})}"></head>
+  <body class="flex bg-slate-100 min-h-screen">
+    <!-- Annotator Sidebar -->
+    <div th:replace="~{annotator/sidebar :: annotator-sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+      <!-- Navbar fragment (optional, if you have a common one) -->
+      <!-- <div th:replace="~{fragments/navbar :: navbar}"></div> -->
+
+      <div class="container mx-auto">
+        <h1
+          class="text-3xl font-bold text-slate-800 mb-8"
+          th:text="${pageTitle}"
+        >
+          My Assigned Tasks
+        </h1>
+
+        <!-- Error Message Display -->
+        <div
+          th:if="${errorMessage}"
+          class="mb-6 p-4 bg-red-100 text-red-700 border border-red-300 rounded-md shadow"
+        >
+          <p th:text="${errorMessage}">Error message placeholder</p>
+        </div>
+
+        <!-- Task List -->
+        <div th:if="${tasksPage != null && !tasksPage.empty}" class="space-y-6">
+          <div
+            th:each="task : ${tasksPage.content}"
+            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+          >
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <h2
+                  class="text-xl font-semibold text-indigo-600 hover:text-indigo-700"
+                >
+                  <a
+                    th:href="@{/annotator/tasks/{taskId}/annotate(taskId=${task.id})}"
+                    th:text="${task.name}"
+                    >Task Name</a
+                  >
+                </h2>
+                <p
+                  th:if="${task.description}"
+                  class="text-sm text-slate-600 mt-1"
+                  th:text="${#strings.abbreviate(task.description, 150)}"
+                >
+                  Task description...
+                </p>
+              </div>
+              <span
+                th:text="${task.deadline != null ? #temporals.format(task.deadline, 'dd MMM yyyy HH:mm') : 'No deadline'}"
+                class="text-xs font-medium px-3 py-1 rounded-full"
+                th:classappend="${task.deadline != null && #temporals.createNow().isAfter(task.deadline)} ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'"
+              >
+                Deadline
+              </span>
+            </div>
+
+            <div class="mb-4">
+              <p class="text-sm text-slate-500">
+                Dataset:
+                <span
+                  class="font-medium text-slate-700"
+                  th:text="${task.datasetName}"
+                  >Dataset Name</span
+                >
+              </p>
+              <p class="text-sm text-slate-500">
+                Label Set:
+                <span
+                  class="font-medium text-slate-700"
+                  th:text="${task.labelSetName}"
+                  >Label Set Name</span
+                >
+              </p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-200 rounded-full h-2.5 mb-2">
+              <div
+                class="bg-green-500 h-2.5 rounded-full transition-all duration-500 ease-out"
+                th:style="'width: ' + ${task.completionPercentage} + '%'"
+              ></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500 mb-4">
+              <span th:text="${task.completionPercentage} + '% Complete'"
+                >0% Complete</span
+              >
+              <span
+                th:text="${task.completedTextPairsInTask} + '/' + ${task.totalTextPairsInTask} + ' items'"
+                >0/0 items</span
+              >
+            </div>
+
+            <div class="mt-4 flex justify-end">
+              <a
+                th:href="@{/annotator/tasks/{taskId}/annotate(taskId=${task.id})}"
+                class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-150"
+              >
+                Start / Resume Annotation
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Tasks Message -->
+        <div
+          th:if="${tasksPage == null || tasksPage.empty}"
+          class="text-center py-12"
+        >
+          <svg
+            class="mx-auto h-12 w-12 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              vector-effect="non-scaling-stroke"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+            />
+          </svg>
+          <h3 class="mt-2 text-lg font-medium text-slate-800">
+            No tasks assigned yet.
+          </h3>
+          <p class="mt-1 text-sm text-slate-500">
+            You currently have no annotation tasks assigned to you. Please check
+            back later.
+          </p>
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav
+          th:if="${tasksPage != null && tasksPage.totalPages > 1}"
+          aria-label="Task pagination"
+          class="mt-10 flex justify-center"
+        >
+          <ul class="inline-flex items-center -space-x-px">
+            <li th:if="${tasksPage.hasPrevious()}">
+              <a
+                th:href="@{/annotator/tasks(page=${tasksPage.number-1}, size=${tasksPage.size})}"
+                class="py-2 px-3 ml-0 leading-tight text-slate-500 bg-white rounded-l-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-700"
+              >
+                Previous
+              </a>
+            </li>
+            <li
+              th:unless="${tasksPage.hasPrevious()}"
+              class="py-2 px-3 ml-0 leading-tight text-slate-300 bg-white rounded-l-lg border border-slate-300 cursor-not-allowed"
+            >
+              Previous
+            </li>
+
+            <th:block
+              th:each="i : ${#numbers.sequence(0, tasksPage.totalPages - 1)}"
+            >
+              <li th:if="${tasksPage.number == i}">
+                <span
+                  th:text="${i+1}"
+                  aria-current="page"
+                  class="py-2 px-3 text-indigo-600 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 hover:text-indigo-700 z-10"
+                ></span>
+              </li>
+              <li th:unless="${tasksPage.number == i}">
+                <a
+                  th:href="@{/annotator/tasks(page=${i}, size=${tasksPage.size})}"
+                  th:text="${i+1}"
+                  class="py-2 px-3 leading-tight text-slate-500 bg-white border border-slate-300 hover:bg-slate-100 hover:text-slate-700"
+                ></a>
+              </li>
+            </th:block>
+
+            <li th:if="${tasksPage.hasNext()}">
+              <a
+                th:href="@{/annotator/tasks(page=${tasksPage.number+1}, size=${tasksPage.size})}"
+                class="py-2 px-3 leading-tight text-slate-500 bg-white rounded-r-lg border border-slate-300 hover:bg-slate-100 hover:text-slate-700"
+              >
+                Next
+              </a>
+            </li>
+            <li
+              th:unless="${tasksPage.hasNext()}"
+              class="py-2 px-3 leading-tight text-slate-300 bg-white rounded-r-lg border border-slate-300 cursor-not-allowed"
+            >
+              Next
+            </li>
+          </ul>
+        </nav>
+      </div>
+      <!-- /container -->
+    </div>
+    <!-- /flex-1 -->
+  </body>
+</html>

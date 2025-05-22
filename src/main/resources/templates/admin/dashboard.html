@@ -1,15 +1,36 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
-<head>
-    <title>Admin Dashboard</title>
-</head>
-<body>
-<h1>Welcome Admin!</h1>
-<div sec:authorize="hasRole('ADMIN')">
-    <p>This content is only visible to admins</p>
+<html th:replace="~{layout/base :: layout (~{::title}, ~{::content})}">
+
+<title>Admin Dashboard</title>
+<div th:fragment="content">
+<section>
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Welcome Admin!</h2>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow border border-gray-200 text-center">
+            <h4 class="text-gray-500 text-sm uppercase tracking-wide">Total Users</h4>
+            <p class="mt-2 text-3xl font-bold text-gray-900">12</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow border border-gray-200 text-center">
+            <h4 class="text-gray-500 text-sm uppercase tracking-wide">Total Annotations</h4>
+            <p class="mt-2 text-3xl font-bold text-gray-900">12,450</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow border border-gray-200 text-center">
+            <h4 class="text-gray-500 text-sm uppercase tracking-wide">Pending Tasks</h4>
+            <p class="mt-2 text-3xl font-bold text-gray-900">23</p>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
+        <ul class="space-y-3 text-sm text-gray-700">
+            <li>• User "john_doe" annotated 50 texts today.</li>
+            <li>• Dataset "News Similarity" imported by admin.</li>
+            <li>• Model training started at 10:30 AM.</li>
+            <li>• Annotation consistency Kappa score: 0.82</li>
+        </ul>
+    </div>
+</section>
 </div>
-<form th:action="@{/auth/logout}" method="post">
-    <button type="submit">Logout</button>
-</form>
-</body>
 </html>

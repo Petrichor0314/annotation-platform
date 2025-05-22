@@ -1,19 +1,23 @@
 package com.mohamedoujdid.annotationplatform.auth.controller;
 
-import com.mohamedoujdid.annotationplatform.auth.dto.PasswordChangeForm;
-import com.mohamedoujdid.annotationplatform.auth.service.AuthService;
-import com.mohamedoujdid.annotationplatform.auth.service.PasswordService;
-import com.mohamedoujdid.annotationplatform.user.model.User;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.mohamedoujdid.annotationplatform.auth.dto.PasswordChangeForm;
+import com.mohamedoujdid.annotationplatform.auth.service.PasswordService;
+import com.mohamedoujdid.annotationplatform.config.CustomUserDetails;
+import com.mohamedoujdid.annotationplatform.exception.InvalidCurrentPasswordException;
+import com.mohamedoujdid.annotationplatform.user.model.User;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/auth/password")
@@ -33,21 +37,52 @@ public class PasswordController {
 
     @PostMapping("/change")
     public String changePassword(
-            @Valid PasswordChangeForm form,
+            @Valid @ModelAttribute("form") PasswordChangeForm form,
             BindingResult result,
-            Authentication authentication
+            Authentication authentication,
+            Model model
     ) {
+        if (!form.getNewPassword().equals(form.getConfirmPassword())) {
+            result.rejectValue("confirmPassword", "mismatch", "New password and confirmation do not match");
+        }
+
         if (result.hasErrors()) {
+            model.addAttribute("form", form); 
+            System.out.println("MODEL: " + model.asMap());
             return "auth/password-change";
         }
 
-        User user = (User) authentication.getPrincipal();
-        passwordService.changePassword(
-                user.getEmail(),
-                form.getCurrentPassword(),
-                form.getNewPassword()
-        );
+        if (authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            User user = userDetails.getUser();
 
-        return "redirect:/user/dashboard";
+            try {
+                passwordService.changePassword(
+                        user.getEmail(),
+                        form.getCurrentPassword(),
+                        form.getNewPassword()
+                );
+            }catch (InvalidCurrentPasswordException e) {
+                    result.rejectValue("currentPassword", "invalid", "Current password is incorrect");
+                    model.addAttribute("form", form);
+                System.out.println("MODEL: " + model.asMap());
+                return "auth/password-change";
+                }
+
+
+            String roleName = user.getRole().getName();
+
+            return switch (roleName) {
+                case "ADMIN" -> "redirect:/admin/dashboard";
+                case "ANNOTATOR" -> "redirect:/annotator/dashboard";
+                default -> throw new IllegalStateException("Unexpected role: " + roleName);
+            };
+
+        }
+
+        throw new IllegalStateException("Unexpected principal type: " +
+                authentication.getPrincipal().getClass().getName());
     }
+
+
+
 }

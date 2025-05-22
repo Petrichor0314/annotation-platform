@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head th:replace="~{fragments/head :: head('Create Label Set')}"></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+      <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
+        <h2 class="text-xl font-bold mb-6">Create New Label Set</h2>
+
+        <div
+          th:if="${errorMessage}"
+          class="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded text-sm"
+        >
+          <span th:text="${errorMessage}"></span>
+        </div>
+
+        <form
+          th:action="@{/admin/labeling/sets/create}"
+          th:object="${labelSetCreateRequest}"
+          method="post"
+          class="space-y-4"
+        >
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700"
+              >Label Set Name</label
+            >
+            <input
+              type="text"
+              id="name"
+              th:field="*{name}"
+              class="w-full border px-3 py-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <p
+              th:if="${#fields.hasErrors('name')}"
+              th:errors="*{name}"
+              class="text-red-500 text-xs mt-1"
+            ></p>
+          </div>
+
+          <div>
+            <label
+              for="description"
+              class="block text-sm font-medium text-gray-700"
+              >Description (Optional)</label
+            >
+            <textarea
+              id="description"
+              th:field="*{description}"
+              rows="3"
+              class="w-full border px-3 py-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            ></textarea>
+            <p
+              th:if="${#fields.hasErrors('description')}"
+              th:errors="*{description}"
+              class="text-red-500 text-xs mt-1"
+            ></p>
+          </div>
+
+          <div class="flex justify-end space-x-3">
+            <a
+              th:href="@{/admin/labeling/sets}"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Cancel
+            </a>
+            <button
+              type="submit"
+              class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-sm"
+            >
+              Create Label Set
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

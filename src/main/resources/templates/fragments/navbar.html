@@ -1,0 +1,10 @@
+<header th:fragment="navbar" class="bg-white shadow-sm w-full">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-xl font-semibold text-gray-800">Annotation Platform</h1>
+        <form th:action="@{/auth/logout}" method="post">
+            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200">
+                Logout
+            </button>
+        </form>
+    </div>
+</header>

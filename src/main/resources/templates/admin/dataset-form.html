@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head th:replace="~{fragments/head :: head('Create Dataset')}"></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+      <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow">
+        <h2 class="text-xl font-bold mb-4">Create New Dataset</h2>
+
+        <!-- Flash error message from redirect, if any -->
+        <div
+          th:if="${errorMessage}"
+          class="mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded"
+        >
+          <span th:text="${errorMessage}"></span>
+        </div>
+
+        <form
+          th:action="@{/admin/datasets/create}"
+          th:object="${datasetCreateRequest}"
+          method="post"
+          enctype="multipart/form-data"
+          class="space-y-4"
+        >
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700"
+              >Dataset Name</label
+            >
+            <input
+              type="text"
+              id="name"
+              th:field="*{name}"
+              class="w-full border px-3 py-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <p
+              th:if="${#fields.hasErrors('name')}"
+              th:errors="*{name}"
+              class="text-red-500 text-xs mt-1"
+            ></p>
+          </div>
+
+          <div>
+            <label
+              for="description"
+              class="block text-sm font-medium text-gray-700"
+              >Description (Optional)</label
+            >
+            <textarea
+              id="description"
+              th:field="*{description}"
+              rows="3"
+              class="w-full border px-3 py-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="file" class="block text-sm font-medium text-gray-700"
+              >Upload Data File (CSV or XLSX)</label
+            >
+            <input
+              type="file"
+              id="file"
+              th:field="*{file}"
+              accept=".csv,.xlsx"
+              class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+            <p
+              th:if="${#fields.hasErrors('file')}"
+              th:errors="*{file}"
+              class="text-red-500 text-xs mt-1"
+            ></p>
+            <p class="text-xs text-gray-500 mt-1">
+              Expected CSV/XLSX format: Column 1 for 'text1', Column 2 for
+              'text2', Column 3 for 'metadata' (optional). Both 'text1' and
+              'text2' are required. The first row is assumed to be a header and
+              will be skipped.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Create Dataset
+          </button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

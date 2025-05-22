@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head th:replace="~{fragments/head :: head('Manage Label Sets')}"></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold mb-6">Manage Label Sets</h2>
+
+        <div
+          th:if="${successMessage}"
+          class="mb-4 p-3 bg-green-100 text-green-700 border border-green-300 rounded text-sm"
+        >
+          <span th:text="${successMessage}"></span>
+        </div>
+        <div
+          th:if="${errorMessage}"
+          class="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded text-sm"
+        >
+          <span th:text="${errorMessage}"></span>
+        </div>
+
+        <a
+          th:href="@{/admin/labeling/sets/create}"
+          class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 mb-4 text-sm"
+        >
+          + Add New Label Set
+        </a>
+
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-100 font-semibold">
+              <tr>
+                <th class="p-3 text-left">ID</th>
+                <th class="p-3 text-left">Name</th>
+                <th class="p-3 text-left">Description</th>
+                <th class="p-3 text-left">Labels Count</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="ls : ${labelSets}" class="border-t hover:bg-gray-50">
+                <td class="p-3" th:text="${ls.id}"></td>
+                <td class="p-3" th:text="${ls.name}"></td>
+                <td
+                  class="p-3"
+                  th:text="${#strings.abbreviate(ls.description, 50)}"
+                ></td>
+                <td class="p-3" th:text="${ls.classLabelCount}"></td>
+                <td class="p-3 text-center">
+                  <a
+                    th:href="@{/admin/labeling/sets/{id}(id=${ls.id})}"
+                    class="text-blue-600 hover:underline"
+                    >View/Manage Labels</a
+                  >
+                  <!-- Add Edit/Delete links later -->
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(labelSets)}">
+                <td colspan="5" class="p-3 text-center text-gray-500">
+                  No label sets found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

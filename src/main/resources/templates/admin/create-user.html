@@ -1,16 +1,89 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Create User</title>
-</head>
-<body>
-<h1>Create New User</h1>
-<form th:action="@{/admin/users}" th:object="${userRequest}" method="post">
-    <div>
-        <label>Email:</label>
-        <input type="email" th:field="*{email}" required>
+  <head th:replace="~{fragments/head :: head('Create User')}"></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+      <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow">
+        <h2
+          class="text-xl font-bold mb-4"
+          th:text="${form.id != null} ? 'Edit User' : 'Create User'"
+        >
+          Create User
+        </h2>
+
+        <form
+          th:action="${form.id != null} ? @{/admin/users/{id}(id=${form.id})} : @{/admin/users}"
+          method="post"
+          th:object="${form}"
+          class="space-y-4"
+        >
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >First Name</label
+            >
+            <input
+              type="text"
+              th:field="*{firstName}"
+              class="w-full border px-3 py-2 rounded-lg"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Last Name</label
+            >
+            <input
+              type="text"
+              th:field="*{lastName}"
+              class="w-full border px-3 py-2 rounded-lg"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              th:field="*{email}"
+              class="w-full border px-3 py-2 rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Role</label>
+            <select th:field="*{role.id}">
+              <option
+                th:each="role : ${roles}"
+                th:value="${role.id}"
+                th:text="${role.name}"
+              ></option>
+            </select>
+          </div>
+
+          <div th:if="${form.id != null}">
+            <label class="inline-flex items-center mt-2">
+              <input
+                type="checkbox"
+                th:field="*{accountNonLocked}"
+                class="mr-2"
+              />
+              <span>Account Non-Locked</span>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          >
+            Submit
+          </button>
+        </form>
+      </div>
     </div>
-    <button type="submit">Create User</button>
-</form>
-</body>
+  </body>
 </html>

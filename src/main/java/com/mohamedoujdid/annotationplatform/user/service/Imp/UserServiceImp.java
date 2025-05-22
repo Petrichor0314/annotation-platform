@@ -5,7 +5,6 @@ import com.mohamedoujdid.annotationplatform.user.repository.UserRepository;
 import com.mohamedoujdid.annotationplatform.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindingResult;
 
 import java.util.List;
 

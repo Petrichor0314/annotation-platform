@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{layouts/annotator-layout :: layout(~{::title}, ~{::main}, ~{::#page-specific-js})}"
+>
+  <head>
+    <title>Annotator Dashboard</title>
+  </head>
+  <body>
+    <main role="main">
+      <div class="container mx-auto mt-8 px-4">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6">
+          Annotator Dashboard
+        </h1>
+        <div class="bg-white shadow-md rounded-lg p-6">
+          <p class="text-gray-700">Welcome to your dashboard!</p>
+          <p class="text-gray-700 mt-4">
+            You can find your assigned tasks
+            <a
+              th:href="@{/annotator/tasks}"
+              class="text-blue-600 hover:underline"
+              >here</a
+            >.
+          </p>
+        </div>
+      </div>
+    </main>
+    <th:block id="page-specific-js">
+      <!-- Add any page-specific JavaScript here if needed -->
+    </th:block>
+  </body>
+</html>

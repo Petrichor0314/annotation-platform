@@ -1,10 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    <h1>user list</h1>
+    <!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Manage Users')}"></head>
+<body class="flex">
+
+<!-- Sidebar -->
+<div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+<!-- Main Content -->
+<div class="flex-1 p-8">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-2xl font-bold mb-6">All Users</h2>
+
+        <a href="/admin/users/create" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 mb-4">
+            + Add New User
+        </a>
+
+        <table class="w-full bg-white shadow-md rounded-lg overflow-hidden text-sm">
+            <thead class="bg-indigo-100 text-indigo-800 font-semibold">
+            <tr>
+                <th class="p-3 text-left">ID</th>
+                <th class="p-3 text-left">Email</th>
+                <th class="p-3 text-left">Role</th>
+                <th class="p-3 text-left">Locked</th>
+                <th class="p-3">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${users}" class="border-t hover:bg-gray-50">
+                <td class="p-3" th:text="${user.id}">1</td>
+                <td class="p-3" th:text="${user.email}">user@example.com</td>
+                <td class="p-3" th:text="${user.role.name}">ADMIN</td>
+                <td class="p-3" th:text="${!user.accountNonLocked ? 'Yes' : 'No'}"></td>
+                <td class="p-3 text-center">
+                    <a th:href="@{|/admin/users/${user.id}/edit|}" class="text-indigo-600 hover:underline">Edit</a>
+                    |
+                    <form th:action="@{|/admin/users/${user.id}/delete|}" method="post" class="inline">
+                        <button class="text-red-500 hover:underline" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 </body>
 </html>

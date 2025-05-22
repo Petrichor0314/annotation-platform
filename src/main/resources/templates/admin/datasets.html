@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head th:replace="~{fragments/head :: head('Manage Datasets')}"></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+      <div class="max-w-7xl mx-auto">
+        <h2 class="text-2xl font-bold mb-6">Manage Datasets</h2>
+
+        <!-- Flash Messages for success/error -->
+        <div
+          th:if="${successMessage}"
+          class="mb-4 p-4 bg-green-100 text-green-700 border border-green-300 rounded"
+        >
+          <span th:text="${successMessage}"></span>
+        </div>
+        <div
+          th:if="${errorMessage}"
+          class="mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded"
+        >
+          <span th:text="${errorMessage}"></span>
+        </div>
+
+        <a
+          th:href="@{/admin/datasets/create}"
+          class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 mb-4"
+        >
+          + Add New Dataset
+        </a>
+
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-indigo-100 text-indigo-800 font-semibold">
+              <tr>
+                <th class="p-3 text-left">ID</th>
+                <th class="p-3 text-left">Name</th>
+                <th class="p-3 text-left">Import Status</th>
+                <th class="p-3 text-left">Progress (Parsed/Saved/Failed)</th>
+                <th class="p-3 text-left">Created At</th>
+                <th class="p-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                th:each="dataset : ${datasets}"
+                class="border-t hover:bg-gray-50"
+              >
+                <td class="p-3" th:text="${dataset.id}"></td>
+                <td class="p-3">
+                  <a
+                    th:href="@{/admin/datasets/{id}(id=${dataset.id})}"
+                    class="text-blue-600 hover:underline"
+                    th:text="${dataset.name}"
+                  ></a>
+                </td>
+                <td class="p-3">
+                  <span
+                    th:if="${dataset.status != null}"
+                    th:text="${dataset.status.name().replace('_', ' ')}"
+                    th:classappend="${dataset.status.name() == 'COMPLETED' ? 'text-green-600' :
+                                       (dataset.status.name() == 'COMPLETED_WITH_ERRORS' ? 'text-yellow-600' :
+                                       (dataset.status.name() == 'PENDING' || dataset.status.name() == 'UPLOADING' || dataset.status.name() == 'VALIDATING' || dataset.status.name() == 'IMPORTING' ? 'text-blue-600' :
+                                       (dataset.status.name() == 'FAILED_UPLOAD' || dataset.status.name() == 'FAILED_VALIDATION' || dataset.status.name() == 'FAILED_IMPORT' ? 'text-red-600' : 'text-gray-600')))}"
+                  ></span>
+                  <span th:unless="${dataset.status != null}">UNKNOWN</span>
+                </td>
+                <td class="p-3">
+                  <span
+                    th:if="${dataset.status != null && (dataset.status.name() == 'IMPORTING' || dataset.status.name() == 'VALIDATING' || dataset.status.name() == 'UPLOADING')}"
+                  >
+                    <span
+                      th:text="${dataset.processedTextPairsCount != null ? dataset.processedTextPairsCount : 0}"
+                    ></span>
+                    saved /
+                    <span
+                      th:text="${dataset.failedTextPairsCount != null ? dataset.failedTextPairsCount : 0}"
+                    ></span>
+                    err
+                    <span
+                      th:if="${dataset.totalTextPairsInFile != null && dataset.totalTextPairsInFile > 0}"
+                    >
+                      (of
+                      <span th:text="${dataset.totalTextPairsInFile}"></span>
+                      file total)
+                    </span>
+                    <span
+                      th:unless="${dataset.totalTextPairsInFile != null && dataset.totalTextPairsInFile > 0}"
+                    >
+                      (Parsing...)
+                    </span>
+                  </span>
+                  <span
+                    th:if="${dataset.status != null && (dataset.status.name() == 'COMPLETED' || dataset.status.name() == 'COMPLETED_WITH_ERRORS')}"
+                  >
+                    <span
+                      th:text="${dataset.processedTextPairsCount != null ? dataset.processedTextPairsCount : 0}"
+                    ></span>
+                    saved
+                    <span
+                      th:if="${dataset.failedTextPairsCount != null && dataset.failedTextPairsCount > 0}"
+                    >
+                      (<span th:text="${dataset.failedTextPairsCount}"></span>
+                      err)
+                    </span>
+                    /
+                    <span
+                      th:text="${dataset.totalTextPairsInFile != null ? dataset.totalTextPairsInFile : '?'}"
+                    ></span>
+                    total
+                  </span>
+                  <span
+                    th:if="${dataset.status != null && (dataset.status.name() == 'PENDING' || dataset.status.name() == 'UPLOADING')}"
+                    >Awaiting processing...</span
+                  >
+                  <span
+                    th:if="${dataset.status != null && (dataset.status.name() == 'FAILED_IMPORT' || dataset.status.name() == 'FAILED_VALIDATION' || dataset.status.name() == 'FAILED_UPLOAD')}"
+                    >Import Failed</span
+                  >
+                </td>
+                <td
+                  class="p-3"
+                  th:text="${dataset.createdAt != null ? #temporals.format(dataset.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}"
+                ></td>
+                <td class="p-3 text-center">
+                  <a
+                    th:href="@{/admin/datasets/{id}(id=${dataset.id})}"
+                    class="text-blue-600 hover:underline mr-2"
+                    >View</a
+                  >
+                  <!-- Add Edit/Delete links later -->
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(datasets)}">
+                <td colspan="6" class="p-3 text-center text-gray-500">
+                  No datasets found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

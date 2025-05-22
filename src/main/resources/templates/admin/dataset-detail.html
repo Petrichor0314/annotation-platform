@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head
+    th:replace="~{fragments/head :: head(${dataset.name != null ? dataset.name : 'Dataset Details'})}"
+  ></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+      <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow">
+        <div th:if="${dataset}">
+          <h2 class="text-2xl font-bold mb-2" th:text="${dataset.name}">
+            Dataset Name
+          </h2>
+          <p
+            class="text-sm text-gray-500 mb-4"
+            th:text="'ID: ' + ${dataset.id}"
+          ></p>
+
+          <!-- Processing Status Section -->
+          <div
+            class="mb-6 p-4 rounded-lg border"
+            th:classappend="${dataset.status != null && dataset.status.name() == 'COMPLETED' ? 'bg-green-50 border-green-300' :
+                                (dataset.status != null && (dataset.status.name() == 'PENDING' || dataset.status.name() == 'UPLOADING' || dataset.status.name() == 'VALIDATING' || dataset.status.name() == 'IMPORTING') ? 'bg-blue-50 border-blue-300' :
+                                 'bg-red-50 border-red-300')}"
+          >
+            <h4
+              class="font-semibold"
+              th:classappend="${dataset.status != null && dataset.status.name() == 'COMPLETED' ? 'text-green-700' :
+                                 (dataset.status != null && (dataset.status.name() == 'PENDING' || dataset.status.name() == 'UPLOADING' || dataset.status.name() == 'VALIDATING' || dataset.status.name() == 'IMPORTING') ? 'text-blue-700' :
+                                  'text-red-700')}"
+            >
+              Import Status:
+              <span
+                th:text="${dataset.status != null ? dataset.status.name().replace('_', ' ') : 'UNKNOWN'}"
+              ></span>
+            </h4>
+            <div
+              th:if="${dataset.status != null && dataset.status.name() == 'IMPORTING'}"
+              class="mt-2 text-sm text-gray-600"
+            >
+              <p th:if="${dataset.totalTextPairsInFile != null}">
+                Total items in file:
+                <span th:text="${dataset.totalTextPairsInFile}"></span>
+              </p>
+              <p>
+                Processed:
+                <span
+                  th:text="${dataset.processedTextPairsCount != null ? dataset.processedTextPairsCount : 0}"
+                ></span>
+              </p>
+              <p>
+                Failed:
+                <span
+                  th:text="${dataset.failedTextPairsCount != null ? dataset.failedTextPairsCount : 0}"
+                ></span>
+              </p>
+              <div
+                th:if="${dataset.totalTextPairsInFile != null && dataset.totalTextPairsInFile > 0 && dataset.processedTextPairsCount != null}"
+                class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2"
+              >
+                <div
+                  class="bg-blue-600 h-2.5 rounded-full"
+                  th:style="'width: ' + (${dataset.processedTextPairsCount * 100.0 / dataset.totalTextPairsInFile}) + '%;'"
+                ></div>
+              </div>
+            </div>
+            <div
+              th:if="${dataset.status != null && dataset.status.name() == 'COMPLETED'}"
+              class="mt-2 text-sm text-gray-600"
+            >
+              <p>
+                Successfully imported items:
+                <span
+                  th:text="${dataset.processedTextPairsCount != null ? dataset.processedTextPairsCount : 0}"
+                ></span>
+              </p>
+              <p
+                th:if="${dataset.failedTextPairsCount != null && dataset.failedTextPairsCount > 0}"
+              >
+                Failed to import items:
+                <span th:text="${dataset.failedTextPairsCount}"></span>
+              </p>
+            </div>
+            <div
+              th:if="${dataset.importErrorMessage != null && !dataset.importErrorMessage.isEmpty()}"
+              class="mt-2 text-sm text-red-700"
+            >
+              <h5 class="font-semibold">Error Details:</h5>
+              <p th:text="${dataset.importErrorMessage}"></p>
+            </div>
+            <div
+              th:if="${dataset.status != null && (dataset.status.name() == 'FAILED_UPLOAD' || dataset.status.name() == 'FAILED_VALIDATION' || dataset.status.name() == 'FAILED_IMPORT') && (dataset.importErrorMessage == null || dataset.importErrorMessage.isEmpty())}"
+              class="mt-2 text-sm text-red-700"
+            >
+              <p>Import failed. Check logs for more details.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <h4 class="font-semibold text-gray-700">Description:</h4>
+              <p
+                th:text="${dataset.description != null && !dataset.description.isEmpty() ? dataset.description : 'N/A'}"
+                class="text-gray-600"
+              ></p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-700">Original File Name:</h4>
+              <p
+                th:text="${dataset.originalFileName != null ? dataset.originalFileName : 'N/A'}"
+                class="text-gray-600"
+              ></p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-700">Created At:</h4>
+              <p
+                th:text="${dataset.createdAt != null ? #temporals.format(dataset.createdAt, 'yyyy-MM-dd HH:mm:ss') : 'N/A'}"
+                class="text-gray-600"
+              ></p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-700">Last Updated:</h4>
+              <p
+                th:text="${dataset.updatedAt != null ? #temporals.format(dataset.updatedAt, 'yyyy-MM-dd HH:mm:ss') : 'N/A'}"
+                class="text-gray-600"
+              ></p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-700">File Size:</h4>
+              <p
+                th:text="${dataset.fileSize != null ? (dataset.fileSize / 1024) + ' KB' : 'N/A'}"
+                class="text-gray-600"
+              ></p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-700">File Type:</h4>
+              <p
+                th:text="${dataset.fileType != null ? dataset.fileType : 'N/A'}"
+                class="text-gray-600"
+              ></p>
+            </div>
+          </div>
+
+          <!-- Text Pairs Table -->
+          <h3 class="text-xl font-semibold mt-8 mb-4">Text Pairs</h3>
+          <div
+            th:if="${dataset.textPairsPage != null && !dataset.textPairsPage.empty}"
+            class="overflow-x-auto shadow-md sm:rounded-lg"
+          >
+            <table class="w-full text-sm text-left text-gray-500">
+              <thead class="text-xs text-gray-700 uppercase bg-indigo-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3">ID</th>
+                  <th scope="col" class="px-6 py-3">Text 1</th>
+                  <th scope="col" class="px-6 py-3">Text 2</th>
+                  <th scope="col" class="px-6 py-3">Metadata</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  th:each="tp : ${dataset.textPairsPage.content}"
+                  class="bg-white border-b hover:bg-gray-50"
+                >
+                  <td class="px-6 py-4" th:text="${tp.id}"></td>
+                  <td
+                    class="px-6 py-4"
+                    th:text="${#strings.abbreviate(tp.text1, 100)}"
+                  ></td>
+                  <td
+                    class="px-6 py-4"
+                    th:text="${#strings.abbreviate(tp.text2, 100)}"
+                  ></td>
+                  <td
+                    class="px-6 py-4"
+                    th:text="${#strings.abbreviate(tp.metadata, 50)}"
+                  ></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            th:if="${dataset.textPairsPage == null || dataset.textPairsPage.empty}"
+            class="mt-4"
+          >
+            <p class="text-gray-500">
+              No text pairs found for this dataset, or the current page is
+              empty.
+            </p>
+          </div>
+
+          <!-- Pagination Controls -->
+          <nav
+            th:if="${dataset.textPairsPage != null && dataset.textPairsPage.totalPages > 0}"
+            aria-label="Text Pair navigation"
+            class="mt-6 flex items-center justify-between"
+          >
+            <div class="text-sm text-gray-700">
+              Showing
+              <span
+                th:text="${dataset.textPairsPage.number * dataset.textPairsPage.size + 1}"
+                >1</span
+              >
+              to
+              <span
+                th:text="${dataset.textPairsPage.number * dataset.textPairsPage.size + dataset.textPairsPage.numberOfElements}"
+                >10</span
+              >
+              of
+              <span th:text="${dataset.textPairsPage.totalElements}">0</span>
+              results
+            </div>
+            <ul class="inline-flex -space-x-px">
+              <li>
+                <a
+                  th:href="${dataset.textPairsPage.first} ? '#' : @{/admin/datasets/{id}(id=${dataset.id}, page=${dataset.textPairsPage.number - 1}, size=${dataset.textPairsPage.size})}"
+                  class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                  th:classappend="${dataset.textPairsPage.first} ? 'opacity-50 cursor-not-allowed' : ''"
+                >
+                  Previous
+                </a>
+              </li>
+              <li
+                th:each="i : ${#numbers.sequence(0, dataset.textPairsPage.totalPages - 1)}"
+                th:if="${dataset.textPairsPage.totalPages > 1 && (i == dataset.textPairsPage.number || (i >= dataset.textPairsPage.number - 2 && i <= dataset.textPairsPage.number + 2) || i == 0 || i == dataset.textPairsPage.totalPages - 1 || dataset.textPairsPage.totalPages <= 5)}"
+              >
+                <a
+                  th:href="@{/admin/datasets/{id}(id=${dataset.id}, page=${i}, size=${dataset.textPairsPage.size})}"
+                  th:text="${i + 1}"
+                  class="py-2 px-3 leading-tight border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                  th:classappend="${i == dataset.textPairsPage.number} ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500 bg-white'"
+                >
+                </a>
+              </li>
+              <li
+                th:if="${dataset.textPairsPage.number < dataset.textPairsPage.totalPages - 3 && dataset.textPairsPage.totalPages > 5}"
+              >
+                <span
+                  class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300"
+                  >...</span
+                >
+              </li>
+              <li
+                th:if="${dataset.textPairsPage.number < dataset.textPairsPage.totalPages - 3 && dataset.textPairsPage.totalPages > 5 && dataset.textPairsPage.number != dataset.textPairsPage.totalPages -1}"
+              >
+                <a
+                  th:href="@{/admin/datasets/{id}(id=${dataset.id}, page=${dataset.textPairsPage.totalPages - 1}, size=${dataset.textPairsPage.size})}"
+                  th:text="${dataset.textPairsPage.totalPages}"
+                  class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                >
+                </a>
+              </li>
+              <li>
+                <a
+                  th:href="${dataset.textPairsPage.last} ? '#' : @{/admin/datasets/{id}(id=${dataset.id}, page=${dataset.textPairsPage.number + 1}, size=${dataset.textPairsPage.size})}"
+                  class="py-2 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                  th:classappend="${dataset.textPairsPage.last} ? 'opacity-50 cursor-not-allowed' : ''"
+                >
+                  Next
+                </a>
+              </li>
+            </ul>
+          </nav>
+
+          <!-- Placeholder for Annotation Tasks related to this Dataset -->
+          <div class="mt-8 mb-4">
+            <h3 class="text-xl font-semibold">Annotation Tasks</h3>
+            <p class="text-gray-500">
+              Annotation tasks associated with this dataset will be listed here.
+              (Feature coming soon)
+            </p>
+          </div>
+
+          <div class="mt-8">
+            <a
+              th:href="@{/admin/datasets}"
+              class="text-indigo-600 hover:underline"
+              >&larr; Back to Datasets</a
+            >
+          </div>
+        </div>
+        <div th:if="${dataset == null}" class="text-center">
+          <p class="text-xl text-red-500 font-semibold">Dataset not found.</p>
+          <a
+            th:href="@{/admin/datasets}"
+            class="mt-4 inline-block text-indigo-600 hover:underline"
+            >&larr; Back to Datasets</a
+          >
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

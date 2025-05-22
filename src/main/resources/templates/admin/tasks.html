@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head th:replace="~{fragments/head :: head('Annotation Tasks')}"></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+      <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">Annotation Tasks</h2>
+          <a
+            th:href="@{/admin/tasks/create}"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Create New Task
+          </a>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div
+          th:if="${successMessage}"
+          class="mb-4 p-4 text-sm text-green-700 bg-green-100 border border-green-400 rounded"
+        >
+          <p th:text="${successMessage}"></p>
+        </div>
+        <div
+          th:if="${errorMessage}"
+          class="mb-4 p-4 text-sm text-red-700 bg-red-100 border border-red-400 rounded"
+        >
+          <p th:text="${errorMessage}"></p>
+        </div>
+
+        <div th:if="${#lists.isEmpty(tasks)}">
+          <p class="text-gray-500">No annotation tasks found.</p>
+        </div>
+
+        <div
+          th:if="${not #lists.isEmpty(tasks)}"
+          class="overflow-x-auto shadow-md sm:rounded-lg"
+        >
+          <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-indigo-50">
+              <tr>
+                <th scope="col" class="px-6 py-3">Name</th>
+                <th scope="col" class="px-6 py-3">Dataset</th>
+                <th scope="col" class="px-6 py-3">Label Set</th>
+                <th scope="col" class="px-6 py-3">Annotators</th>
+                <th scope="col" class="px-6 py-3">Completion</th>
+                <th scope="col" class="px-6 py-3">Deadline</th>
+                <th scope="col" class="px-6 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                th:each="task : ${tasks}"
+                class="bg-white border-b hover:bg-gray-50"
+              >
+                <td
+                  class="px-6 py-4 font-medium text-gray-900"
+                  th:text="${task.name}"
+                >
+                  Task Name
+                </td>
+                <td class="px-6 py-4" th:text="${task.datasetName}">
+                  Dataset Name
+                </td>
+                <td class="px-6 py-4" th:text="${task.labelSetName}">
+                  LabelSet Name
+                </td>
+                <td class="px-6 py-4">
+                  <span
+                    th:each="annotator, iterStat : ${task.assignedAnnotators}"
+                    th:text="${annotator.firstName} + ' ' + ${annotator.lastName} + (${iterStat.last} ? '' : ', ')"
+                    >Annotator</span
+                  >
+                </td>
+                <td class="px-6 py-4">
+                  <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      class="bg-blue-600 h-2.5 rounded-full"
+                      th:style="'width: ' + ${task.completionPercentage} + '%;'"
+                      th:text="${task.completionPercentage} + '%'"
+                    ></div>
+                  </div>
+                </td>
+                <td
+                  class="px-6 py-4"
+                  th:text="${task.deadline != null ? #temporals.format(task.deadline, 'yyyy-MM-dd') : 'N/A'}"
+                >
+                  Deadline
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <a
+                    th:href="@{/admin/tasks/{id}/edit(id=${task.id})}"
+                    class="text-indigo-600 hover:text-indigo-900 mr-2"
+                    >Edit</a
+                  >
+                  <!-- Delete form -->
+                  <form
+                    th:action="@{/admin/tasks/{id}/delete(id=${task.id})}"
+                    method="post"
+                    class="inline-block"
+                    onsubmit="return confirm('Are you sure you want to delete this task?');"
+                  >
+                    <button
+                      type="submit"
+                      class="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

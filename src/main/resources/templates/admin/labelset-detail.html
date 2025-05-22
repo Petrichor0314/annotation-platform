@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head
+    th:replace="~{fragments/head :: head(${labelSet.name != null ? labelSet.name : 'Label Set Details'})}"
+  ></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+      <div class="max-w-3xl mx-auto">
+        <!-- Label Set Info -->
+        <div class="bg-white p-6 rounded-xl shadow mb-8">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-2xl font-bold" th:text="${labelSet.name}">
+                Label Set Name
+              </h2>
+              <p
+                class="text-sm text-gray-500"
+                th:text="'ID: ' + ${labelSet.id}"
+              ></p>
+            </div>
+            <!-- Edit/Delete LabelSet buttons can go here later -->
+          </div>
+          <p
+            th:if="${labelSet.description}"
+            th:text="${labelSet.description}"
+            class="text-gray-700 mt-2"
+          ></p>
+        </div>
+
+        <!-- Add ClassLabel Form -->
+        <div class="bg-white p-6 rounded-xl shadow mb-8">
+          <h3 class="text-xl font-semibold mb-4">
+            Add New Class Label to this Set
+          </h3>
+          <div
+            th:if="${successMessageCL}"
+            class="mb-3 p-3 bg-green-100 text-green-700 border border-green-300 rounded text-sm"
+          >
+            <span th:text="${successMessageCL}"></span>
+          </div>
+          <div
+            th:if="${errorMessageCL}"
+            class="mb-3 p-3 bg-red-100 text-red-700 border border-red-300 rounded text-sm"
+          >
+            <span th:text="${errorMessageCL}"></span>
+          </div>
+
+          <form
+            th:action="@{/admin/labeling/sets/{labelSetId}/labels/create(labelSetId=${labelSet.id})}"
+            th:object="${classLabelCreateRequest}"
+            method="post"
+            class="space-y-3"
+          >
+            <div>
+              <label for="clName" class="text-sm font-medium text-gray-700"
+                >Label Name</label
+              >
+              <input
+                type="text"
+                id="clName"
+                th:field="*{name}"
+                class="w-full border px-3 py-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              />
+              <p
+                th:if="${#fields.hasErrors('name')}"
+                th:errors="*{name}"
+                class="text-red-500 text-xs mt-1"
+              ></p>
+            </div>
+            <div>
+              <label for="clValue" class="text-sm font-medium text-gray-700"
+                >Short Value (Optional)</label
+              >
+              <input
+                type="text"
+                id="clValue"
+                th:field="*{value}"
+                class="w-full border px-3 py-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              />
+            </div>
+            <div>
+              <label
+                for="clDescription"
+                class="text-sm font-medium text-gray-700"
+                >Description (Optional)</label
+              >
+              <textarea
+                id="clDescription"
+                th:field="*{description}"
+                rows="2"
+                class="w-full border px-3 py-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm"
+            >
+              Add Class Label
+            </button>
+          </form>
+        </div>
+
+        <!-- List Existing ClassLabels in this Set -->
+        <div class="bg-white p-6 rounded-xl shadow">
+          <h3 class="text-xl font-semibold mb-4">
+            Existing Class Labels in this Set
+          </h3>
+          <div th:if="${#lists.isEmpty(labelSet.classLabels)}">
+            <p class="text-gray-500">
+              No class labels defined for this set yet.
+            </p>
+          </div>
+          <table
+            class="w-full text-sm"
+            th:if="${!#lists.isEmpty(labelSet.classLabels)}"
+          >
+            <thead class="bg-gray-50 font-semibold">
+              <tr>
+                <th class="p-2 text-left">ID</th>
+                <th class="p-2 text-left">Name</th>
+                <th class="p-2 text-left">Value</th>
+                <th class="p-2 text-left">Description</th>
+                <th class="p-2 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                th:each="cl : ${labelSet.classLabels}"
+                class="border-t hover:bg-gray-50"
+              >
+                <td class="p-2" th:text="${cl.id}"></td>
+                <td class="p-2" th:text="${cl.name}"></td>
+                <td class="p-2" th:text="${cl.value}"></td>
+                <td
+                  class="p-2"
+                  th:text="${#strings.abbreviate(cl.description, 40)}"
+                ></td>
+                <td class="p-2 text-center">
+                  <!-- Edit/Delete ClassLabel buttons later -->
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-6">
+          <a
+            th:href="@{/admin/labeling/sets}"
+            class="text-indigo-600 hover:underline"
+            >&larr; Back to Label Sets</a
+          >
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

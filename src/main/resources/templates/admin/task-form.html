@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head
+    th:replace="~{fragments/head :: head(${editMode != null && editMode} ? 'Edit Annotation Task' : 'Create Annotation Task')}"
+  ></head>
+  <body class="flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="flex-1 p-8">
+      <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+      <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow">
+        <h2
+          class="text-2xl font-bold mb-6"
+          th:text="${editMode != null && editMode} ? 'Edit Annotation Task' : 'Create New Annotation Task'"
+        >
+          Task Form
+        </h2>
+
+        <!-- Error messages -->
+        <div
+          th:if="${errorMessage}"
+          class="mb-4 p-3 text-sm text-red-700 bg-red-100 border border-red-400 rounded"
+        >
+          <p th:text="${errorMessage}"></p>
+        </div>
+        <!-- 
+        <div
+          th:if="${#fields.hasGlobalErrors()}"
+          class="mb-4 p-3 text-sm text-red-700 bg-red-100 border border-red-400 rounded"
+        >
+          <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">
+            Global error message
+          </p>
+        </div>
+        -->
+
+        <form
+          th:action="${editMode != null && editMode} ? @{/admin/tasks/{id}/edit(id=${currentTaskId})} : @{/admin/tasks/create}"
+          th:object="${taskRequest}"
+          method="post"
+          class="space-y-4"
+        >
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700"
+              >Task Name <span class="text-red-500">*</span></label
+            >
+            <input
+              type="text"
+              id="name"
+              th:field="*{name}"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              required
+            />
+            <p
+              th:if="${#fields.hasErrors('name')}"
+              th:errors="*{name}"
+              class="text-xs text-red-600 mt-1"
+            ></p>
+          </div>
+
+          <div>
+            <label
+              for="description"
+              class="block text-sm font-medium text-gray-700"
+              >Description</label
+            >
+            <textarea
+              id="description"
+              th:field="*{description}"
+              rows="3"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            ></textarea>
+            <p
+              th:if="${#fields.hasErrors('description')}"
+              th:errors="*{description}"
+              class="text-xs text-red-600 mt-1"
+            ></p>
+          </div>
+
+          <div>
+            <label
+              for="datasetId"
+              class="block text-sm font-medium text-gray-700"
+              >Dataset <span class="text-red-500">*</span></label
+            >
+            <select
+              id="datasetId"
+              th:field="*{datasetId}"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              required
+            >
+              <option value="">-- Select Dataset --</option>
+              <option
+                th:each="dataset : ${datasets}"
+                th:value="${dataset.id}"
+                th:text="${dataset.name}"
+              >
+                Dataset Name
+              </option>
+            </select>
+            <p
+              th:if="${#fields.hasErrors('datasetId')}"
+              th:errors="*{datasetId}"
+              class="text-xs text-red-600 mt-1"
+            ></p>
+          </div>
+
+          <div>
+            <label
+              for="labelSetId"
+              class="block text-sm font-medium text-gray-700"
+              >Label Set <span class="text-red-500">*</span></label
+            >
+            <select
+              id="labelSetId"
+              th:field="*{labelSetId}"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              required
+            >
+              <option value="">-- Select Label Set --</option>
+              <option
+                th:each="labelSet : ${labelSets}"
+                th:value="${labelSet.id}"
+                th:text="${labelSet.name}"
+              >
+                Label Set Name
+              </option>
+            </select>
+            <p
+              th:if="${#fields.hasErrors('labelSetId')}"
+              th:errors="*{labelSetId}"
+              class="text-xs text-red-600 mt-1"
+            ></p>
+          </div>
+
+          <div>
+            <label
+              for="assignedAnnotatorIds"
+              class="block text-sm font-medium text-gray-700"
+              >Assign Annotators <span class="text-red-500">*</span></label
+            >
+            <select
+              id="assignedAnnotatorIds"
+              th:field="*{assignedAnnotatorIds}"
+              multiple="multiple"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              required
+            >
+              <option
+                th:each="annotator : ${annotators}"
+                th:value="${annotator.id}"
+                th:text="${annotator.firstName} + ' ' + ${annotator.lastName} + ' (' + ${annotator.email} + ')'"
+              >
+                Annotator Name
+              </option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">
+              Hold Ctrl/Cmd to select multiple annotators.
+            </p>
+            <p
+              th:if="${#fields.hasErrors('assignedAnnotatorIds')}"
+              th:errors="*{assignedAnnotatorIds}"
+              class="text-xs text-red-600 mt-1"
+            ></p>
+          </div>
+
+          <div>
+            <label
+              for="deadline"
+              class="block text-sm font-medium text-gray-700"
+              >Deadline (Optional)</label
+            >
+            <input
+              type="datetime-local"
+              id="deadline"
+              th:field="*{deadline}"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+            <p
+              th:if="${#fields.hasErrors('deadline')}"
+              th:errors="*{deadline}"
+              class="text-xs text-red-600 mt-1"
+            ></p>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4">
+            <a
+              th:href="@{/admin/tasks}"
+              class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md shadow-sm"
+              >Cancel</a
+            >
+            <button
+              type="submit"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md shadow-sm"
+            >
+              <span
+                th:text="${editMode != null && editMode} ? 'Update Task' : 'Create Task'"
+                >Save</span
+              >
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,16 +1,15 @@
 package com.mohamedoujdid.annotationplatform.config;
 
+import com.mohamedoujdid.annotationplatform.user.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collection;
 
 @Component
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -22,8 +21,18 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
 
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userDetails.getUser();
+
+        // Force password change if required
+        if (user.isPasswordChangeRequired()) {
+            redirectStrategy.sendRedirect(request, response, "/auth/password/change?required=true");
+            return;
+        }
+
+
         // Determine target URL based on role
-        String targetUrl = determineTargetUrl(authentication);
+        String targetUrl = determineTargetUrl(user);
 
         // Redirect logic
         if (response.isCommitted()) {
@@ -34,15 +43,13 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         redirectStrategy.sendRedirect(request, response, targetUrl);
     }
 
-    private String determineTargetUrl(Authentication authentication) {
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+    private String determineTargetUrl(User user) {
+        String role = user.getRole().getName().toUpperCase();
 
-        if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return "/admin/dashboard";
-        } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ANNOTATOR"))) {
-            return "/annotator/dashboard";
-        } else {
-            throw new IllegalStateException("Unknown role");
-        }
+        return switch (role) {
+            case "ADMIN" -> "/admin/dashboard";
+            case "ANNOTATOR" -> "/annotator/dashboard";
+            default -> throw new IllegalStateException("Unknown role");
+        };
     }
 }

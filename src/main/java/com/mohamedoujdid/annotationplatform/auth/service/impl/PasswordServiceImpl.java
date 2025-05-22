@@ -1,6 +1,7 @@
 package com.mohamedoujdid.annotationplatform.auth.service.impl;
 
 import com.mohamedoujdid.annotationplatform.auth.service.PasswordService;
+import com.mohamedoujdid.annotationplatform.exception.InvalidCurrentPasswordException;
 import com.mohamedoujdid.annotationplatform.user.repository.UserRepository;
 import com.mohamedoujdid.annotationplatform.user.model.User;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,9 @@ public class PasswordServiceImpl implements PasswordService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new RuntimeException("Current password is incorrect");
+            throw new InvalidCurrentPasswordException("Current password is incorrect");
         }
+
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setPasswordChangeRequired(false);
