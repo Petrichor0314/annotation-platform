@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminDatasetController {
 
     private final AdminDatasetService adminDatasetService;
-    private final LabelingService labelingService; // For fetching label sets
+    private final LabelingService labelingService;
 
     @GetMapping
     public String listDatasets(Model model) {
@@ -49,6 +49,7 @@ public class AdminDatasetController {
         }
         List<LabelSetResponse> labelSets = labelingService.getAllLabelSets();
         model.addAttribute("labelSets", labelSets);
+        model.addAttribute("isEdit", false);
         log.info("Showing create dataset form with {} label sets.", labelSets.size());
         return "admin/dataset-form";
     }
@@ -65,29 +66,24 @@ public class AdminDatasetController {
 
         if (bindingResult.hasErrors()) {
             log.warn("Validation errors while creating dataset: {}", bindingResult.getAllErrors());
-            // Add labelSets again for the form redisplay
             List<LabelSetResponse> labelSets = labelingService.getAllLabelSets();
-            model.addAttribute("labelSets", labelSets); // Add to model for direct render
-            model.addAttribute("datasetCreateRequest", request); // Add request back to model
-            // Don't use flash attributes if rendering the view directly
-            // redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.datasetCreateRequest", bindingResult);
-            // redirectAttributes.addFlashAttribute("datasetCreateRequest", request);
-            return "admin/dataset-form"; // Render the form view directly to display errors
+            model.addAttribute("labelSets", labelSets);
+            model.addAttribute("isEdit", false);
+            return "admin/dataset-form";
         }
+
         try {
             adminDatasetService.createDataset(request);
             redirectAttributes.addFlashAttribute("successMessage", "Dataset '" + request.getName() + "' creation initiated. Processing will continue in the background.");
             log.info("Dataset creation initiated for: {}", request.getName());
             return "redirect:/admin/datasets";
-        } catch (IllegalArgumentException e) { // Catch specific exception for duplicate name or other validation
+        } catch (IllegalArgumentException e) {
             log.warn("Error creating dataset {}: {}", request.getName(), e.getMessage());
-            // Add labelSets again for the form redisplay
             List<LabelSetResponse> labelSets = labelingService.getAllLabelSets();
             model.addAttribute("labelSets", labelSets);
-            model.addAttribute("datasetCreateRequest", request);
-            // bindingResult.reject("globalError", e.getMessage()); // Or add as a global error
-            model.addAttribute("errorMessage", e.getMessage()); // Pass specific error message
-            return "admin/dataset-form"; // Render the form view directly
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("isEdit", false);
+            return "admin/dataset-form";
         } catch (IOException e) {
             log.error("IOException during dataset creation for {}: {}", request.getName(), e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to process dataset file: " + e.getMessage());
@@ -98,12 +94,8 @@ public class AdminDatasetController {
             log.error("Unexpected error creating dataset {}: {}", request.getName(), e.getMessage(), e);
             redirectAttributes.addFlashAttribute("errorMessage", "An unexpected error occurred during dataset creation.");
         }
-        // If an error occurred and we haven't returned the form directly, redirect back to the form with the request and errors
-        // This part might be less hit if specific exceptions render the form directly
-        redirectAttributes.addFlashAttribute("datasetCreateRequest", request); // Keep form data
         return "redirect:/admin/datasets/create";
     }
-
 
     @GetMapping("/{id}")
     public String viewDataset(@PathVariable Long id,
@@ -120,5 +112,72 @@ public class AdminDatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "Could not retrieve dataset details: " + e.getMessage());
             return "redirect:/admin/datasets";
         }
+    }
+
+    @GetMapping("/{id}/edit")
+    public String showEditDatasetForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            DatasetResponse dataset = adminDatasetService.getDatasetResponseById(id, Pageable.unpaged());
+            List<LabelSetResponse> labelSets = labelingService.getAllLabelSets();
+            
+            DatasetCreateRequest editRequest = new DatasetCreateRequest();
+            editRequest.setName(dataset.getName());
+            editRequest.setDescription(dataset.getDescription());
+            
+            model.addAttribute("datasetCreateRequest", editRequest);
+            model.addAttribute("dataset", dataset);
+            model.addAttribute("labelSets", labelSets);
+            model.addAttribute("isEdit", true);
+            
+            return "admin/dataset-form";
+        } catch (Exception e) {
+            log.error("Error preparing edit form for dataset {}: {}", id, e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Could not load dataset for editing: " + e.getMessage());
+            return "redirect:/admin/datasets";
+        }
+    }
+
+    @PostMapping("/{id}/edit")
+    public String updateDataset(@PathVariable Long id,
+                              @Valid @ModelAttribute("datasetCreateRequest") DatasetCreateRequest request,
+                              BindingResult bindingResult,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            List<LabelSetResponse> labelSets = labelingService.getAllLabelSets();
+            model.addAttribute("labelSets", labelSets);
+            model.addAttribute("isEdit", true);
+            return "admin/dataset-form";
+        }
+
+        try {
+            DatasetResponse updatedDataset = adminDatasetService.updateDataset(id, request);
+            model.addAttribute("dataset", updatedDataset);
+            redirectAttributes.addFlashAttribute("successMessage", "Dataset updated successfully!");
+            return "redirect:/admin/datasets/" + id;
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation error updating dataset {}: {}", id, e.getMessage());
+            List<LabelSetResponse> labelSets = labelingService.getAllLabelSets();
+            model.addAttribute("labelSets", labelSets);
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("isEdit", true);
+            return "admin/dataset-form";
+        } catch (Exception e) {
+            log.error("Error updating dataset {}: {}", id, e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating dataset: " + e.getMessage());
+            return "redirect:/admin/datasets/" + id;
+        }
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteDataset(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            adminDatasetService.deleteDataset(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Dataset deleted successfully!");
+        } catch (Exception e) {
+            log.error("Error deleting dataset {}: {}", id, e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting dataset: " + e.getMessage());
+        }
+        return "redirect:/admin/datasets";
     }
 }

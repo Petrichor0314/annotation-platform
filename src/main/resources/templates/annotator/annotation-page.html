@@ -130,7 +130,6 @@
                       th:value="${label.id}"
                       th:id="'label-' + ${label.id}"
                       class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-300"
-                      th:checked="${pageData.previouslySelectedClassLabelId != null && pageData.previouslySelectedClassLabelId == label.id}"
                     />
                     <label
                       th:for="'label-' + ${label.id}"

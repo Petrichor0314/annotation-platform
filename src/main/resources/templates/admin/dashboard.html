@@ -117,18 +117,15 @@
                     <!-- Completed Bar -->
                     <div th:if="${taskCompletionData.get('Completed') > 0}" 
                          class="absolute bottom-0 left-0 right-0 bg-green-500"
-                         th:with="total=${taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started')},
-                                  completedHeight=${taskCompletionData.get('Completed') * 100 / total}"
-                         th:style="'height:' + ${completedHeight} + '%'">
+                         th:style="'height:' + (${taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started') > 0 ? taskCompletionData.get('Completed') * 100 / (taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started')) : 0}) + '%'">
                     </div>
                 
                     <!-- In Progress Bar -->
-                    <div th:with="total=${taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started')},
-                                  inProgressHeight=${taskCompletionData.get('In Progress') * 100 / total},
-                                  translateY=${taskCompletionData.get('Completed') * 100 / total}"
+                    <div th:if="${taskCompletionData.get('In Progress') > 0}"
                          class="absolute bottom-0 left-0 right-0 bg-yellow-400"
-                         th:style="'height:' + ${inProgressHeight} + '%; transform: translateY(-' + ${translateY} + '%)'">
+                         th:style="'height:' + (${taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started') > 0 ? taskCompletionData.get('In Progress') * 100 / (taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started')) : 0}) + '%; transform: translateY(-' + (${taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started') > 0 ? taskCompletionData.get('Completed') * 100 / (taskCompletionData.get('Completed') + taskCompletionData.get('In Progress') + taskCompletionData.get('Not Started')) : 0}) + '%)'">
                     </div>
+                
                 </div>
                 
             </div>

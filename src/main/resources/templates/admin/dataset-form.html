@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-  <head th:replace="~{fragments/head :: head('Create Dataset')}"></head>
+  <head
+    th:replace="~{fragments/head :: head(${isEdit != null and isEdit ? 'Edit Dataset' : 'Create Dataset'})}"
+  ></head>
   <body class="flex">
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
@@ -8,18 +10,20 @@
       <div th:replace="~{fragments/navbar :: navbar}"></div>
 
       <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow">
-        <h2 class="text-xl font-bold mb-4">Create New Dataset</h2>
-
-        <!-- Flash error message from redirect, if any -->
+        <h2
+          class="text-xl font-bold mb-4"
+          th:text="${isEdit != null and isEdit ? 'Edit Dataset' : 'Create New Dataset'}"
+        >
+          Create New Dataset
+        </h2>        <!-- Flash error message from redirect, if any -->
         <div
           th:if="${errorMessage}"
           class="mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded"
         >
           <span th:text="${errorMessage}"></span>
         </div>
-
         <form
-          th:action="@{/admin/datasets/create}"
+          th:action="@{${isEdit != null and isEdit ? '/admin/datasets/{id}/edit' : '/admin/datasets/create'} (id=${isEdit != null and isEdit ? dataset.id : ''})}"
           th:object="${datasetCreateRequest}"
           method="post"
           enctype="multipart/form-data"
@@ -55,7 +59,6 @@
               class="w-full border px-3 py-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             ></textarea>
           </div>
-
           <div>
             <label for="file" class="block text-sm font-medium text-gray-700"
               >Upload Data File (CSV or XLSX)</label
@@ -78,14 +81,28 @@
               'text2' are required. The first row is assumed to be a header and
               will be skipped.
             </p>
+            <p th:if="${isEdit}" class="text-sm text-amber-600 mt-2">
+              Note: Uploading a new file will replace all existing text pairs in
+              this dataset.
+            </p>
           </div>
 
-          <button
-            type="submit"
-            class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Create Dataset
-          </button>
+          <div class="flex space-x-4">
+            <button
+              type="submit"
+              class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              th:text="${isEdit ? 'Save Changes' : 'Create Dataset'}"
+            >
+              Create Dataset
+            </button>
+            <a
+              th:if="${isEdit}"
+              th:href="@{/admin/datasets/{id}(id=${dataset.id})}"
+              class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-center"
+            >
+              Cancel
+            </a>
+          </div>
         </form>
       </div>
     </div>

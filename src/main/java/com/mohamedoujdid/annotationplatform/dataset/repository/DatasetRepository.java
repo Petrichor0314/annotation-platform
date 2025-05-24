@@ -13,4 +13,5 @@ public interface DatasetRepository extends JpaRepository<Dataset, Long> {
     List<Dataset> findAllByOrderByCreatedAtDesc();
     boolean existsByNameIgnoreCase(String name);
     List<Dataset> findByImportStatus(DatasetImportStatus importStatus);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 }

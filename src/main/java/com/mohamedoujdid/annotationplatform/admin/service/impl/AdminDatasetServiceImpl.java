@@ -34,6 +34,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
@@ -226,9 +227,9 @@ public class AdminDatasetServiceImpl implements AdminDatasetService {
 
             // Final status update after all processing
             DatasetImportStatus finalStatus = failedToSaveCount.get() > 0 ? DatasetImportStatus.COMPLETED_WITH_ERRORS : DatasetImportStatus.COMPLETED;
-            if (successfullySavedCount.get() == 0 && totalParsedFromFile.get() > 0) { // All parsed items failed to save
+            if (successfullySavedCount.get() == 0 && totalParsedFromFile.get() > 0) // All parsed items failed to save
                  finalStatus = DatasetImportStatus.FAILED_IMPORT;
-            } else if (totalParsedFromFile.get() == 0 && fileSize > 0) { // File was not empty but no valid text pairs found
+            else if (totalParsedFromFile.get() == 0 && fileSize > 0) { // File was not empty but no valid text pairs found
                  finalStatus = DatasetImportStatus.FAILED_IMPORT; // Or COMPLETED_WITH_ERRORS if that makes more sense
                  self.updateDatasetImportStatus(datasetId, finalStatus, "No valid text pairs found in the file.", 0, 0, 0);
                  log.info("Asynchronous processing for dataset ID: {} complete. No valid text pairs found.", datasetId);
@@ -485,5 +486,102 @@ public class AdminDatasetServiceImpl implements AdminDatasetService {
                 .text2(textPair.getText2())
                 .metadata(textPair.getMetadata())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public DatasetResponse updateDataset(Long id, DatasetCreateRequest request) throws IOException {
+        // Check for duplicate dataset name but exclude current dataset
+        if (datasetRepository.existsByNameIgnoreCaseAndIdNot(request.getName(), id)) {
+            log.warn("Attempt to update dataset with duplicate name: {}", request.getName());
+            throw new IllegalArgumentException("A dataset with the name '" + request.getName() + "' already exists.");
+        }
+
+        Dataset dataset = getDatasetById(id);
+
+        // Update basic information
+        dataset.setName(request.getName());
+        dataset.setDescription(request.getDescription());
+        dataset.setUpdatedAt(LocalDateTime.now());
+
+        // Handle file update if provided
+        MultipartFile file = request.getFile();
+        if (file != null && !file.isEmpty()) {
+            String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown_file.tmp";
+            
+            // Update file-related fields
+            dataset.setOriginalFilename(originalFilename);
+            dataset.setContentType(file.getContentType());
+            dataset.setFileSize(file.getSize());
+            dataset.setImportStatus(DatasetImportStatus.PENDING);
+            dataset.setProcessedTextPairsCount(0);
+            dataset.setFailedTextPairsCount(0);
+            dataset.setTextPairCountFromFile(null);
+            
+            // Delete existing text pairs
+            dataset.getTextPairs().clear();
+            
+            // Save the updated dataset first to ensure it exists
+            Dataset savedDataset = datasetRepository.save(dataset);
+            
+            // Process new file
+            Path tempDir = Paths.get(uploadTempDir);
+            if (!Files.exists(tempDir)) {
+                Files.createDirectories(tempDir);
+            }
+            
+            String storedFilename = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_");
+            Path tempFilePath = tempDir.resolve(storedFilename);
+            
+            try {
+                Files.copy(file.getInputStream(), tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+                savedDataset.setStoredFilename(storedFilename);
+                savedDataset.setImportStatus(DatasetImportStatus.PENDING_UPLOAD_COMPLETION);
+                datasetRepository.save(savedDataset);
+                
+                // Start async processing
+                final String tempFilePathStr = tempFilePath.toString();
+                final Long datasetId = savedDataset.getId();
+                
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        self.updateDatasetImportStatus(datasetId, DatasetImportStatus.UPLOADING, null, null, 0, 0);
+                        self.processAndSaveTextPairsAsync(tempFilePathStr, originalFilename, file.getSize(), file.getContentType(), datasetId);
+                    }
+                });
+            } catch (IOException e) {
+                log.error("Failed to save uploaded file for dataset update ID {}: {}", id, e.getMessage());
+                updateDatasetStatusDirectly(id, DatasetImportStatus.FAILED_UPLOAD, "Failed to save uploaded file: " + e.getMessage());
+                throw e;
+            }
+        } else {
+            // If no new file, just save the updated basic information
+            dataset = datasetRepository.save(dataset);
+        }
+
+        return mapToDatasetResponse(dataset, null);
+    }
+
+    @Override
+    @Transactional
+    public void deleteDataset(Long id) {
+        Dataset dataset = getDatasetById(id);
+        
+        // Delete the stored file if it exists
+        if (dataset.getStoredFilename() != null) {
+            try {
+                Path filePath = Paths.get(uploadTempDir, dataset.getStoredFilename());
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                log.warn("Failed to delete file for dataset {}: {}", id, e.getMessage());
+            }
+        }
+        
+        // Delete all text pairs and the dataset
+        textPairRepository.deleteAllByDatasetId(id);
+        datasetRepository.delete(dataset);
+        
+        log.info("Dataset {} and all its text pairs have been deleted", id);
     }
 }

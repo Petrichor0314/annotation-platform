@@ -20,6 +20,14 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (user.getRole() == null) {
+            // If this is the admin user but role is null, give ADMIN role
+            if ("admin@example.com".equals(user.getEmail())) {
+                return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            }
+            // For other users with null role, provide a default role with minimal permissions
+            return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        }
         return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName().toUpperCase()));
     }
 

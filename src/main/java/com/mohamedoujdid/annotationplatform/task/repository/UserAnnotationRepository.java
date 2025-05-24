@@ -1,8 +1,11 @@
 package com.mohamedoujdid.annotationplatform.task.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +20,15 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
     List<UserAnnotation> findByAnnotationTaskIdAndTextPairId(Long annotationTaskId, Long textPairId);
 
     List<UserAnnotation> findByAnnotationTaskIdAndAnnotatorId(Long annotationTaskId, Long annotatorId);
+    
+    // Find annotations for a specific task with pagination
+    Page<UserAnnotation> findByAnnotationTaskId(Long annotationTaskId, Pageable pageable);
+    
+    // Find all annotations for a specific task without pagination
+    List<UserAnnotation> findByAnnotationTaskId(Long annotationTaskId);
+    
+    // Find annotations for a specific task and annotator with pagination
+    Page<UserAnnotation> findByAnnotationTaskIdAndAnnotatorId(Long annotationTaskId, Long annotatorId, Pageable pageable);
 
     // Count annotations by an annotator for a specific task
     long countByAnnotationTaskIdAndAnnotatorId(Long annotationTaskId, Long annotatorId);
@@ -41,4 +53,5 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
     List<UserAnnotation> findAllByAnnotationTaskIdWithDetails(@Param("taskId") Long taskId);
 
     void deleteByAnnotationTaskId(Long annotationTaskId);
+    Optional<UserAnnotation> findByAnnotationTaskIdAndAnnotatorIdAndTextPairId(Long taskId, Long annotatorId, Long textPairId);
 } 

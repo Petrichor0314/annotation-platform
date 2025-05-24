@@ -44,10 +44,18 @@ public class AnnotationPlatformApplication {
 				admin.setLastName("Admin");
 				admin.setEmail("admin@example.com");
 				admin.setPassword(encoder.encode("AdminPassword123!"));
-				admin.setRole(adminRole);
+				admin.setRole(adminRole); // Make sure role is set
 				admin.setAccountNonLocked(true);
 				admin.setPasswordChangeRequired(false);
 				userRepo.save(admin);
+			} else {
+				// Update existing admin user to ensure role is set
+				userRepo.findByEmail("admin@example.com").ifPresent(admin -> {
+					if (admin.getRole() == null) {
+						admin.setRole(adminRole);
+						userRepo.save(admin);
+					}
+				});
 			}
 
 			// Create annotator user if not exists
@@ -64,7 +72,4 @@ public class AnnotationPlatformApplication {
 			}
 		};
 	}
-
-
-
 }
