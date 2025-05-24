@@ -9,12 +9,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.mohamedoujdid.annotationplatform.admin.dto.user.UpdateUserRequest;
 import com.mohamedoujdid.annotationplatform.admin.dto.user.CreateUserRequest;
 import com.mohamedoujdid.annotationplatform.admin.service.AdminUserService;
+import com.mohamedoujdid.annotationplatform.user.model.Annotator;
 import com.mohamedoujdid.annotationplatform.user.model.Role;
-import com.mohamedoujdid.annotationplatform.user.model.User;
 import com.mohamedoujdid.annotationplatform.user.repository.RoleRepository;
 
 import jakarta.validation.Valid;
@@ -31,43 +32,86 @@ public class AdminUserController {
 
     @GetMapping
     public String listUsers(Model model) {
-        List<User> users = userService.getAllUsers();
-        model.addAttribute("users", users);
+        List<Annotator> annotators = userService.getAllAnnotators();
+        model.addAttribute("users", annotators);
         return "admin/user-list";
     }
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("form", new CreateUserRequest());
-        model.addAttribute("roles",roleRepository.findAll() );
+        model.addAttribute("roles", roleRepository.findAll());
         return "admin/create-user";
     }
 
     @PostMapping
-    public String createUser(@ModelAttribute("form") @Valid CreateUserRequest form) {
-        userService.createUser(form);
-        return "redirect:/admin/users";
+    public String createUser(@ModelAttribute("form") @Valid CreateUserRequest form, 
+                          org.springframework.validation.BindingResult bindingResult,
+                          Model model,
+                          RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            // Return to form with validation errors
+            model.addAttribute("roles", roleRepository.findAll());
+            return "admin/create-user";
+        }
+        
+        try {
+            userService.createUser(form);
+            redirectAttributes.addFlashAttribute("successMessage", "User created successfully");
+            return "redirect:/admin/users";
+        } catch (Exception e) {
+            // Handle any other exceptions
+            model.addAttribute("errorMessage", "Error creating user: " + e.getMessage());
+            model.addAttribute("roles", roleRepository.findAll());
+            return "admin/create-user";
+        }
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        UpdateUserRequest user = userService.getUpdateUserForm(id);
-        model.addAttribute("form", user);
-        model.addAttribute("roles", roleRepository.findAll());
-        return "admin/edit-user";
+    public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            UpdateUserRequest user = userService.getUpdateUserForm(id);
+            model.addAttribute("form", user);
+            return "admin/edit-user";
+        } catch (IllegalArgumentException e) {
+            // This will be thrown if an admin tries to edit another admin
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/admin/users";
+        }
     }
 
     @PostMapping("/{id}")
-    public String updateUser(@PathVariable Long id, @ModelAttribute("form") @Valid UpdateUserRequest form) {
-        Role role = roleRepository.findById(form.getRoleId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid role ID"));
-        userService.updateUser(id, form, role);
-        return "redirect:/admin/users";
+    public String updateUser(@PathVariable Long id, @ModelAttribute("form") @Valid UpdateUserRequest form, 
+                           org.springframework.validation.BindingResult bindingResult,
+                           Model model,
+                           RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            // Return to form with validation errors
+            return "admin/edit-user";
+        }
+        
+        try {
+            // Get the current role of the user and keep it (should be ANNOTATOR)
+            userService.updateUser(id, form, null);
+            redirectAttributes.addFlashAttribute("successMessage", "User updated successfully");
+            return "redirect:/admin/users";
+        } catch (IllegalArgumentException e) {
+            // This will be thrown if an admin tries to edit another admin
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/admin/users";
+        }
     }
 
     @PostMapping("/{id}/delete")
-    public String deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return "redirect:/admin/users";
+    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            userService.deleteUser(id);
+            redirectAttributes.addFlashAttribute("successMessage", "User deleted successfully");
+            return "redirect:/admin/users";
+        } catch (IllegalArgumentException e) {
+            // This will be thrown if an admin tries to delete another admin
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/admin/users";
+        }
     }
 }

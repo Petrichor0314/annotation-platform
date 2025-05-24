@@ -22,4 +22,9 @@ public class AnnotationPageData {
     private Long nextTextPairId;
     private Long previousTextPairId;
     private int currentTextPairIndexInDataset; // 0-based index, if useful for direct navigation
+    
+    // Individual annotator progress
+    private int annotatorProgressPercentage;
+    private int annotatorCompletedPairs;
+    private int totalPairsInTask;
 } 

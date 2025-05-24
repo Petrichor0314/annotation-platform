@@ -20,5 +20,9 @@ public interface AnnotationTaskRepository extends JpaRepository<AnnotationTask, 
 
     @Query("SELECT DISTINCT t FROM AnnotationTask t JOIN t.assignedAnnotators u WHERE u.id = :annotatorId ORDER BY t.createdAt DESC")
     Page<AnnotationTask> findByAssignedAnnotatorId(@Param("annotatorId") Long annotatorId, Pageable pageable);
-
+    
+    // Added methods for dashboard
+    long countByCompletionPercentageLessThan(int percentage);
+    long countByCompletionPercentage(int percentage);
+    long countByCompletionPercentageBetween(int minPercentage, int maxPercentage);
 }

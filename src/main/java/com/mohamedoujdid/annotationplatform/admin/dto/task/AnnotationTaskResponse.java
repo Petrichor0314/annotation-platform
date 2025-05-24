@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 @Data
@@ -25,6 +26,9 @@ public class AnnotationTaskResponse {
     private Set<UserSummaryResponse> assignedAnnotators;
     private Integer totalTextPairsInTask; // Will be dataset.getTextPairs().size()
     private Integer completedTextPairsInTask; // Count of text pairs where all assigned annotators have provided a label
+
+    // Map of annotator ID to their individual progress percentage
+    private Map<Long, Integer> annotatorProgressPercentages;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

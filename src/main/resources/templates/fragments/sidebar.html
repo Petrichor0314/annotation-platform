@@ -1,55 +1,139 @@
 <nav
   th:fragment="sidebar"
-  class="w-64 bg-white shadow-md border-r border-gray-200 min-h-screen p-6 space-y-4"
+  class="w-64 bg-indigo-800 text-white min-h-screen flex flex-col shadow-lg"
 >
-  <a
-    href="/admin/dashboard"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >🏠 Dashboard</a
-  >
-  <a
-    href="/admin/users"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >👤 Manage Users</a
-  >
-  <a
-    href="/admin/datasets"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >📂 Datasets</a
-  >
-  <a
-    href="/admin/labeling/sets"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >🏷️ Label Sets</a
-  >
-  <a
-    href="/admin/tasks"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >📋 Annotation Tasks</a
-  >
-  <a
-    href="/admin/tasks/create"
-    class="block text-gray-700 font-semibold hover:text-indigo-600 pl-4"
-    >➕ Create Task</a
-  >
-  <a
-    href="/admin/annotations"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >📝 Annotations</a
-  >
-  <a
-    href="/admin/train"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >🤖 Train Model</a
-  >
-  <a
-    href="/admin/stats"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >📊 Statistics</a
-  >
-  <a
-    href="/admin/export"
-    class="block text-gray-700 font-semibold hover:text-indigo-600"
-    >⬇️ Export</a
-  >
+  <div class="p-4 border-b border-indigo-700">
+    <h2 class="text-xl font-bold">Admin Panel</h2>
+  </div>
+  
+  <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+    <a
+      href="/admin/dashboard"
+      class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+      th:classappend="${#currentUri == '/admin/dashboard'} ? 'bg-indigo-700' : ''"
+    >
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+      </svg>
+      <span>Dashboard</span>
+    </a>
+    
+    <a
+      href="/admin/users"
+      class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+      th:classappend="${ currentUri!= null && currentUri.startsWith('/admin/users')} ? 'bg-indigo-700' : ''"
+    >
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+      </svg>
+      <span>Manage Users</span>
+    </a>
+    
+    <a
+      href="/admin/datasets"
+      class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+      th:classappend="${currentUri!= null && currentUri.startsWith('/admin/datasets')} ? 'bg-indigo-700' : ''"
+    >
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+      </svg>
+      <span>Datasets</span>
+    </a>
+    
+    <a
+      href="/admin/labeling/sets"
+      class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+      th:classappend="${currentUri!= null && currentUri.startsWith('/admin/labeling')} ? 'bg-indigo-700' : ''"
+    >
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+      </svg>
+      <span>Label Sets</span>
+    </a>
+    
+    <div class="py-2">
+      <p class="text-xs uppercase text-indigo-300 px-4 mb-2 font-semibold">Tasks</p>
+      
+      <a
+        href="/admin/tasks"
+        class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+        th:classappend="${#currentUri == '/admin/tasks'} ? 'bg-indigo-700' : ''"
+      >
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+        </svg>
+        <span>All Tasks</span>
+      </a>
+      
+      <a
+        href="/admin/tasks/create"
+        class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+        th:classappend="${#currentUri == '/admin/tasks/create'} ? 'bg-indigo-700' : ''"
+      >
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        <span>Create Task</span>
+      </a>
+    </div>
+    
+    <div class="py-2">
+      <p class="text-xs uppercase text-indigo-300 px-4 mb-2 font-semibold">Analysis</p>
+      
+      <a
+        href="/admin/annotations"
+        class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+        th:classappend="${currentUri!= null && currentUri.startsWith('/admin/annotations')} ? 'bg-indigo-700' : ''"
+      >
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
+        <span>Annotations</span>
+      </a>
+      
+      <a
+        href="/admin/stats"
+        class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+        th:classappend="${#currentUri == '/admin/stats'} ? 'bg-indigo-700' : ''"
+      >
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        <span>Statistics</span>
+      </a>
+      
+      <a
+        href="/admin/train"
+        class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+        th:classappend="${#currentUri == '/admin/train'} ? 'bg-indigo-700' : ''"
+      >
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        <span>Train Model</span>
+      </a>
+      
+      <a
+        href="/admin/export"
+        class="flex items-center py-2.5 px-4 rounded transition-colors duration-200 hover:bg-indigo-700 group"
+        th:classappend="${#currentUri == '/admin/export'} ? 'bg-indigo-700' : ''"
+      >
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        <span>Export</span>
+      </a>
+    </div>
+  </div>
+  
+  <div class="p-4 border-t border-indigo-700">
+    <form th:action="@{/auth/logout}" method="post">
+      <button type="submit" class="flex items-center w-full py-2 px-4 rounded bg-red-600 hover:bg-red-700 transition-colors duration-200">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </form>
+  </div>
 </nav>

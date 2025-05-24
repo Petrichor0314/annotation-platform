@@ -14,5 +14,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Page<User> findAllByDeletedFalse(Pageable pageable);
     List<User> findAllByDeletedFalse();
-
+    
+    // Added methods for dashboard
+    long countByDeletedFalseAndRole_name(String roleName);
+    long countByDeletedFalse();
+    List<User> findTop5ByDeletedFalseOrderByIdDesc();
 }

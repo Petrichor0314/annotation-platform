@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -93,6 +94,7 @@ public class AnnotationTaskServiceImpl implements AnnotationTaskService {
         AnnotationTask savedTask = annotationTaskRepository.save(task);
         log.info("Created AnnotationTask ID: {} for Dataset ID: {} with LabelSet ID: {}", savedTask.getId(), dataset.getId(), labelSet.getId());
         // Initial completion update (will be 0% if dataset has text pairs, or 100% if no text pairs and no annotators - edge case)
+        
         updateTaskCompletionPercentage(savedTask.getId()); 
         // Fetch again to get the potentially updated percentage from the call above
         AnnotationTask finalTask = annotationTaskRepository.findById(savedTask.getId()).orElse(savedTask);
@@ -197,6 +199,10 @@ public class AnnotationTaskServiceImpl implements AnnotationTaskService {
         log.info("UserAnnotation ID: {} {} for Task ID: {}, TextPair ID: {}, Annotator ID: {}", 
                  savedAnnotation.getId(), (existingAnnotation != null ? "updated" : "saved"), taskId, textPair.getId(), annotatorId);
 
+        // Track the last annotated text pair for this annotator
+        task.getLastAnnotatedPairIds().put(annotatorId, textPair.getId());
+        annotationTaskRepository.save(task);
+
         updateTaskCompletionPercentage(taskId);
         return mapToUserAnnotationResponse(savedAnnotation);
     }
@@ -208,7 +214,7 @@ public class AnnotationTaskServiceImpl implements AnnotationTaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("AnnotationTask not found with id: " + taskId));
 
         Set<User> assignedAnnotators = task.getAssignedAnnotators();
-        List<TextPair> textPairsInDataset = textPairRepository.findByDatasetIdOrderByIdAsc(task.getDataset().getId()); // Use ordered list
+        List<TextPair> textPairsInDataset = textPairRepository.findByDatasetIdOrderByIdAsc(task.getDataset().getId());
 
         if (assignedAnnotators.isEmpty() || textPairsInDataset.isEmpty()) {
             task.setCompletionPercentage(assignedAnnotators.isEmpty() && textPairsInDataset.isEmpty() ? 100 : 0);
@@ -217,32 +223,22 @@ public class AnnotationTaskServiceImpl implements AnnotationTaskService {
             return;
         }
 
-        long totalDistinctTextPairsInDataset = textPairsInDataset.size();
-        if (totalDistinctTextPairsInDataset == 0) { // Should be caught by above, but defensive
-             task.setCompletionPercentage(100);
-             annotationTaskRepository.save(task);
-             return;
-        }
-
-        // This calculates completion based on how many text pairs have been annotated by ALL assigned annotators.
-        // For individual annotator progress, a different metric might be needed if tasks can be partially completed by individuals.
-        // The current task.completionPercentage is task-wide.
-        long fullyCompletedTextPairs = 0;
-        Set<Long> assignedAnnotatorIds = assignedAnnotators.stream().map(User::getId).collect(Collectors.toSet());
-
-        for (TextPair tp : textPairsInDataset) {
-            long annotationsCountForPairByAssignedUsers = userAnnotationRepository
-                    .countAnnotationsForTextPairByAnnotators(taskId, tp.getId(), assignedAnnotatorIds);
-            if (annotationsCountForPairByAssignedUsers >= assignedAnnotators.size()) {
-                fullyCompletedTextPairs++;
-            }
-        }
+        int totalTextPairs = textPairsInDataset.size();
+        int totalPossibleAnnotations = totalTextPairs * assignedAnnotators.size();
         
-        int percentage = (int) Math.round(((double) fullyCompletedTextPairs / totalDistinctTextPairsInDataset) * 100.0);
-        task.setCompletionPercentage(percentage);
+        // Simply count the total number of annotations made for this task
+        long totalAnnotationsMade = userAnnotationRepository.countByAnnotationTaskId(taskId);
+        
+        // Calculate the overall progress percentage
+        int overallPercentage = totalPossibleAnnotations > 0 
+            ? (int) Math.round(((double) totalAnnotationsMade / totalPossibleAnnotations) * 100.0) 
+            : 0;
+        
+        task.setCompletionPercentage(overallPercentage);
         annotationTaskRepository.save(task);
-        log.info("Task ID: {} overall completion updated to {}%. Total pairs: {}, Fully completed pairs: {}", 
-                 taskId, percentage, totalDistinctTextPairsInDataset, fullyCompletedTextPairs);
+        
+        log.info("Task ID: {} overall completion updated to {}%. Total annotations: {}/{}", 
+                 taskId, overallPercentage, totalAnnotationsMade, totalPossibleAnnotations);
     }
 
     @Override
@@ -349,78 +345,67 @@ public class AnnotationTaskServiceImpl implements AnnotationTaskService {
 
     @Override
     @Transactional(readOnly = true)
-    public AnnotationPageData getAnnotationPageData(Long taskId, Long annotatorId, Integer requestedTextPairIndex0Based) {
-        AnnotationTask task = annotationTaskRepository.findByIdWithDetails(taskId) 
-                .orElseThrow(() -> new ResourceNotFoundException("AnnotationTask not found with id: " + taskId));
+    public AnnotationPageData getAnnotationPageData(Long taskId, Long annotatorId, Integer requestedTextPairIndex) {
+        // Validate task and annotator exist and are related
+        AnnotationTask task = annotationTaskRepository.findByIdWithDetails(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        User annotator = userRepository.findById(annotatorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Annotator not found with id: " + annotatorId));
-
-        if (task.getAssignedAnnotators().stream().noneMatch(a -> a.getId().equals(annotatorId))) {
-            log.warn("Security Alert: Annotator {} attempted to access task {} they are not assigned to.", annotatorId, taskId);
-            throw new SecurityException("User " + annotatorId + " is not assigned to task " + taskId);
+        // Security check (keep this)
+        if (!task.getAssignedAnnotators().stream().anyMatch(a -> a.getId().equals(annotatorId))) {
+            throw new SecurityException("User not assigned to task");
         }
 
-        List<TextPair> allTextPairsInDataset = textPairRepository.findByDatasetIdOrderByIdAsc(task.getDataset().getId());
-        if (allTextPairsInDataset.isEmpty()) {
-            log.warn("Task {} (Dataset {}) has no text pairs.", taskId, task.getDataset().getId());
-            return AnnotationPageData.builder()
-                    .taskDetails(mapToAnnotationTaskResponse(task))
-                    .availableClassLabels(Collections.emptyList())
-                    .currentPageNumber(0)
-                    .totalTextPairPages(0)
-                    .allPairsInTaskAnnotatedByCurrentUser(true)
-                    .currentTextPairIndexInDataset(-1)
-                    .build();
+        // Get all text pairs in order
+        List<TextPair> allPairs = textPairRepository.findByDatasetIdOrderByIdAsc(task.getDataset().getId());
+        if (allPairs.isEmpty()) {
+            throw new ResourceNotFoundException("No text pairs in this task");
         }
 
-        List<UserAnnotation> userAnnotationsForTask = userAnnotationRepository.findByAnnotationTaskIdAndAnnotatorId(taskId, annotatorId);
-        Map<Long, UserAnnotation> annotatedTextPairIdToAnnotationMap = userAnnotationsForTask.stream()
-                .collect(Collectors.toMap(ua -> ua.getTextPair().getId(), ua -> ua, (existing, replacement) -> existing)); 
+        // Get user's annotations for this task
+        Map<Long, UserAnnotation> userAnnotations = userAnnotationRepository
+                .findByAnnotationTaskIdAndAnnotatorId(taskId, annotatorId).stream()
+                .collect(Collectors.toMap(
+                        ua -> ua.getTextPair().getId(),
+                        ua -> ua
+                ));
 
-        int currentPairIndex = -1;
-        TextPair currentTextPairEntity = null;
-
-        if (requestedTextPairIndex0Based != null && requestedTextPairIndex0Based >= 0 && requestedTextPairIndex0Based < allTextPairsInDataset.size()) {
-            currentPairIndex = requestedTextPairIndex0Based;
+        // Determine current index
+        int currentIndex;
+        if (requestedTextPairIndex != null && requestedTextPairIndex >= 0 && requestedTextPairIndex < allPairs.size()) {
+            // User requested a specific index
+            currentIndex = requestedTextPairIndex;
         } else {
-            for (int i = 0; i < allTextPairsInDataset.size(); i++) {
-                if (!annotatedTextPairIdToAnnotationMap.containsKey(allTextPairsInDataset.get(i).getId())) {
-                    currentPairIndex = i;
-                    break;
-                }
-            }
-            if (currentPairIndex == -1) { // All pairs annotated or list exhausted
-                currentPairIndex = 0; 
-            }
+            // Find first unannotated pair, or last pair if all annotated
+            currentIndex = IntStream.range(0, allPairs.size())
+                    .filter(i -> !userAnnotations.containsKey(allPairs.get(i).getId()))
+                    .findFirst()
+                    .orElse(allPairs.size() - 1);
         }
-        currentTextPairEntity = allTextPairsInDataset.get(currentPairIndex);
 
-        TextPairResponse currentTextPairDto = mapToTextPairResponse(currentTextPairEntity);
-        Long previouslySelectedLabelId = Optional.ofNullable(annotatedTextPairIdToAnnotationMap.get(currentTextPairEntity.getId()))
-                .map(ua -> ua.getClassLabel().getId())
-                .orElse(null);
+        // Get current text pair
+        TextPair currentPair = allPairs.get(currentIndex);
 
-        List<ClassLabelResponse> classLabelDtos = task.getLabelSet().getClassLabels().stream()
-                .map(this::mapToClassLabelResponse)
-                .collect(Collectors.toList());
-
-        boolean allCurrentUserAnnotationsDone = annotatedTextPairIdToAnnotationMap.size() == allTextPairsInDataset.size();
-
-        Long nextTpId = (currentPairIndex + 1 < allTextPairsInDataset.size()) ? allTextPairsInDataset.get(currentPairIndex + 1).getId() : null;
-        Long prevTpId = (currentPairIndex - 1 >= 0) ? allTextPairsInDataset.get(currentPairIndex - 1).getId() : null;
-
+        // Build and return data
         return AnnotationPageData.builder()
                 .taskDetails(mapToAnnotationTaskResponse(task))
-                .currentTextPair(currentTextPairDto)
-                .availableClassLabels(classLabelDtos)
-                .currentPageNumber(currentPairIndex + 1) 
-                .totalTextPairPages(allTextPairsInDataset.size()) 
-                .previouslySelectedClassLabelId(previouslySelectedLabelId)
-                .allPairsInTaskAnnotatedByCurrentUser(allCurrentUserAnnotationsDone)
-                .nextTextPairId(nextTpId)
-                .previousTextPairId(prevTpId)
-                .currentTextPairIndexInDataset(currentPairIndex)
+                .currentTextPair(mapToTextPairResponse(currentPair))
+                .availableClassLabels(task.getLabelSet().getClassLabels().stream()
+                        .map(this::mapToClassLabelResponse)
+                        .collect(Collectors.toList()))
+                .currentPageNumber(currentIndex + 1)
+                .totalTextPairPages(allPairs.size())
+                .previouslySelectedClassLabelId(
+                        Optional.ofNullable(userAnnotations.get(currentPair.getId()))
+                                .map(ua -> ua.getClassLabel().getId())
+                                .orElse(null)
+                )
+                .allPairsInTaskAnnotatedByCurrentUser(userAnnotations.size() == allPairs.size())
+                .nextTextPairId(currentIndex < allPairs.size() - 1 ? allPairs.get(currentIndex + 1).getId() : null)
+                .previousTextPairId(currentIndex > 0 ? allPairs.get(currentIndex - 1).getId() : null)
+                .currentTextPairIndexInDataset(currentIndex)
+                .annotatorProgressPercentage((int)(userAnnotations.size() * 100.0 / allPairs.size()))
+                .annotatorCompletedPairs(userAnnotations.size())
+                .totalPairsInTask(allPairs.size())
                 .build();
     }
     

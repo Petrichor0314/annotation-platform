@@ -102,58 +102,5 @@ public class AnnotatorController {
         }
     }
 
-    @PostMapping("/tasks/{taskId}/annotate")
-    public String submitAnnotation(@PathVariable Long taskId,
-                                   @ModelAttribute UserAnnotationRequest userAnnotationRequest,
-                                   @RequestParam String action,
-                                   @RequestParam(name = "currentTextPairIndex") int currentTextPairIndex,
-                                   @AuthenticationPrincipal CustomUserDetails currentUserDetails,
-                                   RedirectAttributes redirectAttributes) {
-        User currentUser = currentUserDetails != null ? currentUserDetails.getUser() : null;
-        if (currentUser == null) {
-            return "redirect:/auth/login";
-        }
-        log.info("Annotator {} submitting for task {}, textPairId {}, classLabelId {}, action: {}, currentIndex: {}", 
-                currentUser.getEmail(), taskId, userAnnotationRequest.getTextPairId(), userAnnotationRequest.getClassLabelId(), action, currentTextPairIndex);
 
-        Integer nextPageIndex = null;
-        Integer previousPageIndex = null;
-        
-        AnnotationPageData initialPageDataForNav = annotationTaskService.getAnnotationPageData(taskId, currentUser.getId(), currentTextPairIndex);
-        if (initialPageDataForNav.getNextTextPairId() != null) {
-            nextPageIndex = currentTextPairIndex + 1;
-        }
-        if (initialPageDataForNav.getPreviousTextPairId() != null) {
-            previousPageIndex = currentTextPairIndex - 1;
-        }
-
-        try {
-            if ("validate_next".equals(action)) {
-                if (userAnnotationRequest.getClassLabelId() == null) {
-                    redirectAttributes.addFlashAttribute("validationErrorMessage", "Please select a label before validating.");
-                    return "redirect:/annotator/tasks/" + taskId + "/annotate?textPairIndex=" + currentTextPairIndex;
-                }
-                annotationTaskService.submitAnnotation(taskId, currentUser.getId(), userAnnotationRequest);
-                redirectAttributes.addFlashAttribute("successMessage", "Annotation saved!");
-                if (nextPageIndex != null) {
-                    return "redirect:/annotator/tasks/" + taskId + "/annotate?textPairIndex=" + nextPageIndex;
-                } else {
-                    return "redirect:/annotator/tasks/" + taskId + "/annotate?textPairIndex=" + currentTextPairIndex; 
-                }
-            } else if ("next_only".equals(action)) {
-                if (nextPageIndex != null) {
-                    return "redirect:/annotator/tasks/" + taskId + "/annotate?textPairIndex=" + nextPageIndex;
-                }
-            } else if ("previous_only".equals(action)) {
-                if (previousPageIndex != null) {
-                    return "redirect:/annotator/tasks/" + taskId + "/annotate?textPairIndex=" + previousPageIndex;
-                }
-            }
-            return "redirect:/annotator/tasks/" + taskId + "/annotate?textPairIndex=" + currentTextPairIndex;
-        } catch (Exception e) {
-            log.error("Error submitting annotation for task {}: {}", taskId, e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("errorMessage", "Error submitting annotation: " + e.getMessage());
-            return "redirect:/annotator/tasks/" + taskId + "/annotate?textPairIndex=" + currentTextPairIndex;
-        }
-    }
 } 

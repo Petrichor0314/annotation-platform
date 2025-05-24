@@ -4,7 +4,6 @@ import com.mohamedoujdid.annotationplatform.user.model.Role;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,6 +29,6 @@ public class CreateUserRequest {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @NotNull(message = "Role is required")
+    // Role is no longer required in the form as it will be set automatically to ANNOTATOR
     private Role role;
 }

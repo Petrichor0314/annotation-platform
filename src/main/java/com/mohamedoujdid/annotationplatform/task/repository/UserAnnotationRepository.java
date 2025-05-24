@@ -21,6 +21,9 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
     // Count annotations by an annotator for a specific task
     long countByAnnotationTaskIdAndAnnotatorId(Long annotationTaskId, Long annotatorId);
 
+    // Count all annotations for a specific task
+    long countByAnnotationTaskId(Long annotationTaskId);
+
     // Count distinct text pairs annotated for a task (at least one annotation)
     @Query("SELECT COUNT(DISTINCT ua.textPair.id) FROM UserAnnotation ua WHERE ua.annotationTask.id = :taskId")
     long countDistinctTextPairsAnnotatedForTask(@Param("taskId") Long taskId);

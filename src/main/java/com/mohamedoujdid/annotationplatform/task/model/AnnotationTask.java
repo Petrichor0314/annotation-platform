@@ -6,7 +6,9 @@ import com.mohamedoujdid.annotationplatform.user.model.User; // Assuming User en
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -37,6 +39,24 @@ public class AnnotationTask {
     @Column(nullable = false)
     @Builder.Default
     private Integer completionPercentage = 0;
+
+    // Map to store individual annotator progress percentages
+    @ElementCollection
+    @CollectionTable(name = "annotator_progress", 
+                    joinColumns = @JoinColumn(name = "annotation_task_id"))
+    @MapKeyColumn(name = "annotator_id")
+    @Column(name = "progress_percentage")
+    @Builder.Default
+    private Map<Long, Integer> annotatorProgressPercentages = new HashMap<>();
+
+    // Map to store the last text pair ID annotated by each annotator
+    @ElementCollection
+    @CollectionTable(name = "last_annotated_pairs", 
+                    joinColumns = @JoinColumn(name = "annotation_task_id"))
+    @MapKeyColumn(name = "annotator_id")
+    @Column(name = "text_pair_id")
+    @Builder.Default
+    private Map<Long, Long> lastAnnotatedPairIds = new HashMap<>();
 
     private LocalDateTime deadline;
 

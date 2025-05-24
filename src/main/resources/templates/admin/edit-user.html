@@ -15,6 +15,11 @@
           Create User
         </h2>
 
+        <!-- Error message display -->
+        <div th:if="${errorMessage}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <span th:text="${errorMessage}"></span>
+        </div>
+
         <form
           th:action="${form.id != null} ? @{/admin/users/{id}(id=${form.id})} : @{/admin/users}"
           method="post"
@@ -31,6 +36,9 @@
               class="w-full border px-3 py-2 rounded-lg"
               required
             />
+            <div th:if="${#fields.hasErrors('firstName')}" class="text-red-700 text-sm">
+              <span th:each="error : ${#fields.errors('firstName')}" th:text="${error}"></span>
+            </div>
           </div>
 
           <div>
@@ -43,6 +51,9 @@
               class="w-full border px-3 py-2 rounded-lg"
               required
             />
+            <div th:if="${#fields.hasErrors('lastName')}" class="text-red-700 text-sm">
+              <span th:each="error : ${#fields.errors('lastName')}" th:text="${error}"></span>
+            </div>
           </div>
 
           <div>
@@ -52,6 +63,9 @@
               th:field="*{email}"
               class="w-full border px-3 py-2 rounded-lg"
             />
+            <div th:if="${#fields.hasErrors('email')}" class="text-red-700 text-sm">
+              <span th:each="error : ${#fields.errors('email')}" th:text="${error}"></span>
+            </div>
           </div>
 
           <div th:if="${form.id == null}">
@@ -63,18 +77,13 @@
               th:field="*{password}"
               class="w-full border px-3 py-2 rounded-lg"
             />
+            <div th:if="${#fields.hasErrors('password')}" class="text-red-700 text-sm">
+              <span th:each="error : ${#fields.errors('password')}" th:text="${error}"></span>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Role</label>
-            <select th:field="*{roleId}">
-              <option
-                th:each="roleOpt : ${roles}"
-                th:value="${roleOpt.id}"
-                th:text="${roleOpt.name}"
-              ></option>
-            </select>
-          </div>
+          <!-- Role selection removed as users will always remain annotators -->
+          <input type="hidden" th:field="*{roleId}" />
 
           <div th:if="${form.id != null}">
             <label class="inline-flex items-center mt-2">
